@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>コーヒー1級 地図クイズ</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#1a1a2e;color:#e0d5c5;font-family:'Helvetica Neue',Arial,sans-serif;min-height:100vh;padding:10px}
+h1{text-align:center;font-size:1.15rem;color:#c8a96e;margin-bottom:8px;letter-spacing:.05em}
+.tabs{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;margin-bottom:12px}
+.tab{background:#16213e;border:1.5px solid #2d4a6e;color:#9eb3cc;padding:6px 11px;border-radius:20px;cursor:pointer;font-size:.76rem;transition:all .2s}
+.tab.active{background:#c8a96e;border-color:#c8a96e;color:#1a1a2e;font-weight:700}
+.quiz-area{max-width:640px;margin:0 auto}
+.map-wrap{position:relative;border-radius:10px;overflow:hidden;margin-bottom:10px;background:#111118}
+.map-wrap svg{width:100%;display:block}
+.sub-label{text-align:center;font-size:.72rem;color:#9eb3cc;margin-bottom:4px;font-weight:600}
+.country{fill:#C0C0C0;stroke:#888;stroke-width:0.5px;vector-effect:non-scaling-stroke}
+.country.highlight-correct{fill:#FFD700 !important;stroke:#FFD700;stroke-width:1.5px}
+.country.highlight-wrong{fill:#E84040 !important;stroke:#E84040;stroke-width:1.5px}
+.equator{stroke:#D42020;stroke-width:1.2px;stroke-dasharray:6,3;fill:none;opacity:0.8}
+.internal-border{fill:none;stroke:#FFD700;stroke-width:1px;stroke-opacity:0.7;pointer-events:none}
+.region-dot{fill:#222;stroke:#fff;stroke-width:0.5px;pointer-events:none}
+.ref-label{font-size:9px;fill:#444;text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.ref-label.italic{font-style:italic;fill:#667}
+.ref-label.small{font-size:7.5px}
+.ref-bg{fill:rgba(255,255,255,0.85);stroke:#999;stroke-width:0.5px;rx:2;ry:2}
+.pin-group{cursor:pointer}
+.pin-dot{stroke:#222;stroke-width:0.8px}
+.pin-label{font-weight:900;font-size:13px;fill:#222;text-anchor:start;dominant-baseline:central;pointer-events:none;paint-order:stroke fill;stroke:#fff;stroke-width:3px;stroke-linejoin:round}
+.pin-group.correct .pin-dot{fill:#FFD700 !important;r:5}
+.pin-group.correct .pin-label{fill:#FFD700;stroke:#222}
+.pin-group.wrong .pin-dot{fill:#E84040 !important;r:5}
+.pin-group.wrong .pin-label{fill:#E84040;stroke:#222}
+.q-box{background:#0f3460;border-radius:10px;padding:12px;text-align:center;margin-bottom:10px}
+.q-label{font-size:.72rem;color:#9eb3cc;margin-bottom:4px}
+.q-text{font-size:1.05rem;font-weight:700;color:#fff;line-height:1.5}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px}
+.c-btn{background:#16213e;border:1.5px solid #2d4a6e;color:#e0d5c5;padding:10px 6px;border-radius:8px;cursor:pointer;font-size:.88rem;text-align:center;transition:all .2s;line-height:1.3;display:flex;align-items:center;justify-content:center;gap:6px}
+.c-btn:hover{border-color:#c8a96e;color:#c8a96e}
+.c-btn.correct{background:#3a3510;border-color:#FFD700;color:#FFD700;font-weight:700}
+.c-btn.wrong{background:#4a1a1a;border-color:#e05555;color:#e05555}
+.c-btn:disabled{cursor:default;opacity:.8}
+.c-badge{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;font-weight:900;font-size:.88rem;flex-shrink:0}
+.fb{text-align:center;padding:10px;border-radius:8px;font-size:.92rem;font-weight:700;margin-bottom:8px;min-height:42px}
+.fb.ok{background:#2a2a10;color:#FFD700}
+.fb.ng{background:#3a1a1a;color:#e05555}
+.fb.hidden{visibility:hidden}
+.next-btn{display:block;width:100%;background:#c8a96e;color:#1a1a2e;border:none;padding:11px;border-radius:8px;font-size:.95rem;font-weight:700;cursor:pointer;transition:opacity .2s}
+.next-btn:hover{opacity:.85}
+.prog-wrap{background:#0d1b2e;border-radius:4px;height:5px;margin-bottom:12px}
+.prog{background:#c8a96e;height:5px;border-radius:4px;transition:width .4s}
+.score{text-align:center;font-size:.82rem;color:#9eb3cc;margin-bottom:6px}
+.result{text-align:center;background:#0f3460;border-radius:12px;padding:18px;margin-top:8px}
+.result h2{color:#c8a96e;font-size:1.3rem;margin-bottom:6px}
+.result p{color:#e0d5c5;margin-bottom:12px;font-size:.88rem}
+.rst-btn{background:#0f3460;border:1.5px solid #c8a96e;color:#c8a96e;padding:9px 22px;border-radius:8px;cursor:pointer;font-size:.88rem;font-weight:700}
+.loading{text-align:center;padding:40px;color:#9eb3cc}
+</style>
+</head>
+<body>
+<div style="display:flex;align-items:center;gap:10px;justify-content:center;padding-top:4px">
+  <a href="index.html" style="text-decoration:none;font-size:22px;opacity:0.7">◀</a>
+  <h1 style="margin:0">☕ コーヒー1級 地図クイズ</h1>
+</div>
+<div class="tabs" id="tabBar"></div>
+<div class="quiz-area">
+  <div class="score" id="sc">読み込み中…</div>
+  <div class="prog-wrap"><div class="prog" id="pb" style="width:0%"></div></div>
+  <div class="sub-label" id="subLabel"></div>
+  <div class="map-wrap" id="mapWrap"><div class="loading" id="loadMsg">🗺️ 地図データを読み込んでいます…</div></div>
+  <div class="q-box">
+    <div class="q-label">地図上の A〜D から正解を選んでください</div>
+    <div class="q-text" id="qText">読み込み中…</div>
+  </div>
+  <div class="choices" id="ch"></div>
+  <div class="fb hidden" id="fb"></div>
+  <button class="next-btn" id="nxt" onclick="next()" style="display:none">次の問題へ →</button>
+  <div class="result" id="res" style="display:none">
+    <h2>結果</h2><p id="resT"></p>
+    <button class="rst-btn" onclick="start()">もう一度挑戦</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3"></script>
+<script>
+const LABELS=['A','B','C','D'];
+const PIN_COLORS=['#ff6b6b','#4ecdc4','#ffe66d','#a29bfe'];
+
+/* ===== MAP CONFIGS (bounds, equator, etc.) ===== */
+const MAP_CFG = {
+  central_america: {
+    subLabel: '中米 全体',
+    bounds: [[-118, 3], [-66, 33]],
+    equator: false,
+    showCountryHighlight: true
+  },
+  guatemala: {
+    subLabel: 'グアテマラ 詳細',
+    bounds: [[-93, 13.2], [-88, 18]],
+    equator: false,
+    showCountryHighlight: false,
+    refLabels: [
+      {lat:14.62,lng:-90.52,text:'☆ グアテマラシティ',small:true}
+    ],
+    regionDots: [
+      {lat:15.3,lng:-91.5},
+      {lat:15.5,lng:-90.4},
+      {lat:14.55,lng:-90.73},
+      {lat:14.7,lng:-91.2},
+      {lat:14.46,lng:-90.43},
+      {lat:14.65,lng:-89.5},
+      {lat:14.96,lng:-91.8},
+      {lat:14.5,lng:-90.88}
+    ]
+  },
+  south_america: {
+    subLabel: '南米 全体',
+    bounds: [[-82, -20], [-34, 14]],
+    equator: true,
+    showCountryHighlight: true
+  },
+  brazil: {
+    subLabel: 'ブラジル 詳細',
+    bounds: [[-55, -28], [-35, -5]],
+    equator: false,
+    showCountryHighlight: false,
+    regionDots: [
+      {lat:-12.5,lng:-39},
+      {lat:-18,lng:-46.5},
+      {lat:-22,lng:-47},
+      {lat:-24.5,lng:-51},
+      {lat:-20,lng:-40.5},
+      {lat:-22,lng:-44.5}
+    ]
+  },
+  colombia: {
+    subLabel: 'コロンビア 詳細',
+    bounds: [[-80, -3], [-68, 13]],
+    equator: true,
+    showCountryHighlight: false,
+    refLabels: [
+      {lat:12,lng:-74,text:'カリブ海',italic:true},
+      {lat:2,lng:-79.5,text:'太平洋',italic:true}
+    ],
+    regionDots: [
+      {lat:10.5,lng:-74},
+      {lat:7,lng:-73.2},
+      {lat:6.25,lng:-75.5},
+      {lat:5.07,lng:-75.5},
+      {lat:4.7,lng:-74.1},
+      {lat:2.45,lng:-76.6},
+      {lat:2.5,lng:-75.8},
+      {lat:1.3,lng:-77.4},
+      {lat:4.5,lng:-75.7},
+      {lat:4,lng:-75.2}
+    ]
+  },
+  indonesia: {
+    subLabel: 'インドネシア 詳細',
+    bounds: [[94, -12], [142, 8]],
+    equator: true,
+    showCountryHighlight: false,
+    regionDots: [
+      {lat:4,lng:97},
+      {lat:-4.5,lng:104.5},
+      {lat:-7.8,lng:113},
+      {lat:-7.2,lng:110},
+      {lat:-8.3,lng:115.4},
+      {lat:-3,lng:119.8},
+      {lat:-3.5,lng:119.8}
+    ]
+  },
+  africa: {
+    subLabel: 'アフリカ 全体',
+    bounds: [[-12, -18], [55, 20]],
+    equator: true,
+    showCountryHighlight: true
+  },
+  ethiopia: {
+    subLabel: 'エチオピア 詳細',
+    bounds: [[33, 3], [48, 15]],
+    equator: false,
+    showCountryHighlight: false,
+    regionDots: [
+      {lat:9,lng:36.5},
+      {lat:7.7,lng:36.8},
+      {lat:6.2,lng:38.5},
+      {lat:6.3,lng:38.2},
+      {lat:9.3,lng:42.1}
+    ]
+  },
+  tanzania: {
+    subLabel: 'タンザニア 詳細',
+    bounds: [[29, -12], [41, 0]],
+    equator: true,
+    showCountryHighlight: false,
+    regionDots: [
+      {lat:-3.2,lng:35.5},
+      {lat:-3.4,lng:36.7},
+      {lat:-3.35,lng:37.3},
+      {lat:-1.3,lng:31.8},
+      {lat:-8.9,lng:33.4},
+      {lat:-10.8,lng:35},
+      {lat:-3.4,lng:35.7}
+    ]
+  }
+};
+
+/* ===== REGIONS (4 tabs) ===== */
+const REGIONS = {
+  central_south_america: {
+    label: '🌎 中南米編',
+    maps: ['central_america','guatemala']
+  },
+  south_america: {
+    label: '🌎 南米編',
+    maps: ['south_america','colombia','brazil']
+  },
+  africa_region: {
+    label: '🌍 アフリカ編',
+    maps: ['africa','ethiopia','tanzania']
+  },
+  asia: {
+    label: '🌏 アジア編',
+    maps: ['indonesia']
+  }
+};
+
+/* ===== QUESTIONS (each carries its mapKey) ===== */
+const ALL_QUESTIONS = {
+  central_america: [
+    {q:'メキシコ はどこですか？', ans:'mexico', spots:{mexico:{lat:17,lng:-96,cid:'484'},guatemala:{lat:14.8,lng:-90.5,cid:'320'},jamaica:{lat:18.1,lng:-77.3,cid:'388'},cuba:{lat:21.5,lng:-79.5,cid:'192'}}},
+    {q:'グアテマラ はどこですか？', ans:'guatemala', spots:{guatemala:{lat:14.8,lng:-90.5,cid:'320'},mexico:{lat:17,lng:-96,cid:'484'},honduras:{lat:14.5,lng:-87,cid:'340'},elsalvador:{lat:13.7,lng:-89,cid:'222'}}},
+    {q:'ジャマイカ はどこですか？', ans:'jamaica', spots:{jamaica:{lat:18.1,lng:-77.3,cid:'388'},cuba:{lat:21.5,lng:-79.5,cid:'192'},honduras:{lat:14.5,lng:-87,cid:'340'},costarica:{lat:10,lng:-84,cid:'188'}}},
+    {q:'ホンジュラス はどこですか？', ans:'honduras', spots:{honduras:{lat:14.5,lng:-87,cid:'340'},guatemala:{lat:14.8,lng:-90.5,cid:'320'},nicaragua:{lat:12.5,lng:-85,cid:'558'},elsalvador:{lat:13.7,lng:-89,cid:'222'}}},
+    {q:'コスタリカ はどこですか？', ans:'costarica', spots:{costarica:{lat:10,lng:-84,cid:'188'},panama:{lat:8.5,lng:-80,cid:'591'},nicaragua:{lat:12.5,lng:-85,cid:'558'},honduras:{lat:14.5,lng:-87,cid:'340'}}},
+    {q:'エルサルバドル はどこですか？', ans:'elsalvador', spots:{elsalvador:{lat:13.7,lng:-89,cid:'222'},guatemala:{lat:14.8,lng:-90.5,cid:'320'},honduras:{lat:14.5,lng:-87,cid:'340'},nicaragua:{lat:12.5,lng:-85,cid:'558'}}},
+    {q:'ニカラグア はどこですか？', ans:'nicaragua', spots:{nicaragua:{lat:12.5,lng:-85,cid:'558'},honduras:{lat:14.5,lng:-87,cid:'340'},costarica:{lat:10,lng:-84,cid:'188'},panama:{lat:8.5,lng:-80,cid:'591'}}},
+    {q:'パナマ はどこですか？', ans:'panama', spots:{panama:{lat:8.5,lng:-80,cid:'591'},costarica:{lat:10,lng:-84,cid:'188'},nicaragua:{lat:12.5,lng:-85,cid:'558'},jamaica:{lat:18.1,lng:-77.3,cid:'388'}}},
+    {q:'キューバ はどこですか？', ans:'cuba', spots:{cuba:{lat:21.5,lng:-79.5,cid:'192'},jamaica:{lat:18.1,lng:-77.3,cid:'388'},mexico:{lat:17,lng:-96,cid:'484'},guatemala:{lat:14.8,lng:-90.5,cid:'320'}}},
+  ],
+  guatemala: [
+    {q:'ウエウエテナンゴ はどこですか？', ans:'huehue', spots:{huehue:{lat:15.3,lng:-91.5},coban:{lat:15.5,lng:-90.4},sanmarcos:{lat:14.96,lng:-91.8},antigua:{lat:14.55,lng:-90.73}}},
+    {q:'コバン はどこですか？', ans:'coban', spots:{coban:{lat:15.5,lng:-90.4},huehue:{lat:15.3,lng:-91.5},antigua:{lat:14.55,lng:-90.73},nuevo_oriente:{lat:14.65,lng:-89.5}}},
+    {q:'アンティグア はどこですか？', ans:'antigua', spots:{antigua:{lat:14.55,lng:-90.73},atitlan:{lat:14.7,lng:-91.2},fraijanes:{lat:14.46,lng:-90.43},coban:{lat:15.5,lng:-90.4}}},
+    {q:'アティトラン はどこですか？', ans:'atitlan', spots:{atitlan:{lat:14.7,lng:-91.2},acatenango:{lat:14.5,lng:-90.88},huehue:{lat:15.3,lng:-91.5},antigua:{lat:14.55,lng:-90.73}}},
+    {q:'フライハーネス はどこですか？', ans:'fraijanes', spots:{fraijanes:{lat:14.46,lng:-90.43},antigua:{lat:14.55,lng:-90.73},atitlan:{lat:14.7,lng:-91.2},nuevo_oriente:{lat:14.65,lng:-89.5}}},
+    {q:'ニューオリエンテ はどこですか？', ans:'nuevo_oriente', spots:{nuevo_oriente:{lat:14.65,lng:-89.5},coban:{lat:15.5,lng:-90.4},fraijanes:{lat:14.46,lng:-90.43},antigua:{lat:14.55,lng:-90.73}}},
+    {q:'サンマルコス はどこですか？', ans:'sanmarcos', spots:{sanmarcos:{lat:14.96,lng:-91.8},huehue:{lat:15.3,lng:-91.5},atitlan:{lat:14.7,lng:-91.2},acatenango:{lat:14.5,lng:-90.88}}},
+    {q:'アカテナンゴ はどこですか？', ans:'acatenango', spots:{acatenango:{lat:14.5,lng:-90.88},atitlan:{lat:14.7,lng:-91.2},fraijanes:{lat:14.46,lng:-90.43},sanmarcos:{lat:14.96,lng:-91.8}}},
+  ],
+  south_america: [
+    {q:'コロンビア はどこですか？', ans:'colombia', spots:{colombia:{lat:4,lng:-73,cid:'170'},ecuador:{lat:-1.5,lng:-78,cid:'218'},peru:{lat:-10,lng:-76,cid:'604'},brazil:{lat:-10,lng:-52,cid:'76'}}},
+    {q:'エクアドル はどこですか？', ans:'ecuador', spots:{ecuador:{lat:-1.5,lng:-78,cid:'218'},colombia:{lat:4,lng:-73,cid:'170'},peru:{lat:-10,lng:-76,cid:'604'},brazil:{lat:-10,lng:-52,cid:'76'}}},
+    {q:'ペルー はどこですか？', ans:'peru', spots:{peru:{lat:-10,lng:-76,cid:'604'},colombia:{lat:4,lng:-73,cid:'170'},ecuador:{lat:-1.5,lng:-78,cid:'218'},brazil:{lat:-10,lng:-52,cid:'76'}}},
+    {q:'ブラジル はどこですか？', ans:'brazil', spots:{brazil:{lat:-10,lng:-52,cid:'76'},colombia:{lat:4,lng:-73,cid:'170'},peru:{lat:-10,lng:-76,cid:'604'},ecuador:{lat:-1.5,lng:-78,cid:'218'}}},
+  ],
+  brazil: [
+    {q:'バイーア はどこですか？', ans:'bahia', spots:{bahia:{lat:-12.5,lng:-39},cerrado:{lat:-18,lng:-46.5},mogiana:{lat:-22,lng:-47},s_minas:{lat:-22,lng:-44.5}}},
+    {q:'セラード はどこですか？', ans:'cerrado', spots:{cerrado:{lat:-18,lng:-46.5},bahia:{lat:-12.5,lng:-39},mogiana:{lat:-22,lng:-47},espirito:{lat:-20,lng:-40.5}}},
+    {q:'モジアナ はどこですか？', ans:'mogiana', spots:{mogiana:{lat:-22,lng:-47},cerrado:{lat:-18,lng:-46.5},parana:{lat:-24.5,lng:-51},s_minas:{lat:-22,lng:-44.5}}},
+    {q:'パラナ はどこですか？', ans:'parana', spots:{parana:{lat:-24.5,lng:-51},mogiana:{lat:-22,lng:-47},cerrado:{lat:-18,lng:-46.5},bahia:{lat:-12.5,lng:-39}}},
+    {q:'エスピリットサント はどこですか？', ans:'espirito', spots:{espirito:{lat:-20,lng:-40.5},s_minas:{lat:-22,lng:-44.5},bahia:{lat:-12.5,lng:-39},cerrado:{lat:-18,lng:-46.5}}},
+    {q:'南ミナス はどこですか？', ans:'s_minas', spots:{s_minas:{lat:-22,lng:-44.5},mogiana:{lat:-22,lng:-47},espirito:{lat:-20,lng:-40.5},cerrado:{lat:-18,lng:-46.5}}},
+  ],
+  colombia: [
+    {q:'マグダレナ はどこですか？', ans:'magdalena', spots:{magdalena:{lat:10.5,lng:-74},santander:{lat:7,lng:-73.2},medellin:{lat:6.25,lng:-75.5},cundinamarca:{lat:4.7,lng:-74.1}}},
+    {q:'サンタンデール はどこですか？', ans:'santander', spots:{santander:{lat:7,lng:-73.2},magdalena:{lat:10.5,lng:-74},medellin:{lat:6.25,lng:-75.5},cundinamarca:{lat:4.7,lng:-74.1}}},
+    {q:'メデリン はどこですか？', ans:'medellin', spots:{medellin:{lat:6.25,lng:-75.5},santander:{lat:7,lng:-73.2},manizales:{lat:5.07,lng:-75.5},cundinamarca:{lat:4.7,lng:-74.1}}},
+    {q:'マニサレス はどこですか？', ans:'manizales', spots:{manizales:{lat:5.07,lng:-75.5},medellin:{lat:6.25,lng:-75.5},popayan:{lat:2.45,lng:-76.6},armenia:{lat:4.5,lng:-75.7}}},
+    {q:'クンディナマルカ はどこですか？', ans:'cundinamarca', spots:{cundinamarca:{lat:4.7,lng:-74.1},santander:{lat:7,lng:-73.2},tolima:{lat:4,lng:-75.2},medellin:{lat:6.25,lng:-75.5}}},
+    {q:'ポパヤン はどこですか？', ans:'popayan', spots:{popayan:{lat:2.45,lng:-76.6},narino:{lat:1.3,lng:-77.4},huila:{lat:2.5,lng:-75.8},manizales:{lat:5.07,lng:-75.5}}},
+    {q:'ウイラ はどこですか？', ans:'huila', spots:{huila:{lat:2.5,lng:-75.8},popayan:{lat:2.45,lng:-76.6},tolima:{lat:4,lng:-75.2},narino:{lat:1.3,lng:-77.4}}},
+    {q:'ナリーニョ はどこですか？', ans:'narino', spots:{narino:{lat:1.3,lng:-77.4},popayan:{lat:2.45,lng:-76.6},huila:{lat:2.5,lng:-75.8},armenia:{lat:4.5,lng:-75.7}}},
+    {q:'アルメニア はどこですか？', ans:'armenia', spots:{armenia:{lat:4.5,lng:-75.7},manizales:{lat:5.07,lng:-75.5},medellin:{lat:6.25,lng:-75.5},popayan:{lat:2.45,lng:-76.6}}},
+    {q:'トリマ はどこですか？', ans:'tolima', spots:{tolima:{lat:4,lng:-75.2},cundinamarca:{lat:4.7,lng:-74.1},huila:{lat:2.5,lng:-75.8},medellin:{lat:6.25,lng:-75.5}}},
+  ],
+  indonesia: [
+    {q:'アチェ州/北スマトラ州 はどこですか？', ans:'aceh', spots:{aceh:{lat:4,lng:97},s_sumatra:{lat:-4.5,lng:104.5},e_java:{lat:-7.8,lng:113},s_sulawesi:{lat:-3,lng:119.8}}},
+    {q:'南スマトラ州/ランポン州 はどこですか？', ans:'s_sumatra', spots:{s_sumatra:{lat:-4.5,lng:104.5},aceh:{lat:4,lng:97},c_java:{lat:-7.2,lng:110},bali:{lat:-8.3,lng:115.4}}},
+    {q:'東部ジャワ州 はどこですか？', ans:'e_java', spots:{e_java:{lat:-7.8,lng:113},c_java:{lat:-7.2,lng:110},bali:{lat:-8.3,lng:115.4},s_sumatra:{lat:-4.5,lng:104.5}}},
+    {q:'中部ジャワ州 はどこですか？', ans:'c_java', spots:{c_java:{lat:-7.2,lng:110},e_java:{lat:-7.8,lng:113},bali:{lat:-8.3,lng:115.4},s_sumatra:{lat:-4.5,lng:104.5}}},
+    {q:'バリ州キンタマニ地区 はどこですか？', ans:'bali', spots:{bali:{lat:-8.3,lng:115.4},e_java:{lat:-7.8,lng:113},s_sulawesi:{lat:-3,lng:119.8},c_java:{lat:-7.2,lng:110}}},
+    {q:'南スラウェシ州トラジャ県（トラジャ）はどこですか？', ans:'s_sulawesi', spots:{s_sulawesi:{lat:-3,lng:119.8},kalossi:{lat:-3.5,lng:119.8},bali:{lat:-8.3,lng:115.4},aceh:{lat:4,lng:97}}},
+    {q:'南スラウェシ州エンレカン県（カロシ）はどこですか？', ans:'kalossi', spots:{kalossi:{lat:-3.5,lng:119.8},s_sulawesi:{lat:-3,lng:119.8},bali:{lat:-8.3,lng:115.4},e_java:{lat:-7.8,lng:113}}},
+  ],
+  africa: [
+    {q:'エチオピア はどこですか？', ans:'ethiopia', spots:{ethiopia:{lat:8,lng:39,cid:'231'},kenya:{lat:-0.5,lng:37.5,cid:'404'},tanzania:{lat:-6,lng:35,cid:'834'},ivory:{lat:7,lng:-5.5,cid:'384'}}},
+    {q:'ケニア はどこですか？', ans:'kenya', spots:{kenya:{lat:-0.5,lng:37.5,cid:'404'},ethiopia:{lat:8,lng:39,cid:'231'},uganda:{lat:1,lng:32,cid:'800'},tanzania:{lat:-6,lng:35,cid:'834'}}},
+    {q:'タンザニア はどこですか？', ans:'tanzania', spots:{tanzania:{lat:-6,lng:35,cid:'834'},kenya:{lat:-0.5,lng:37.5,cid:'404'},uganda:{lat:1,lng:32,cid:'800'},ethiopia:{lat:8,lng:39,cid:'231'}}},
+    {q:'ウガンダ はどこですか？', ans:'uganda', spots:{uganda:{lat:1,lng:32,cid:'800'},kenya:{lat:-0.5,lng:37.5,cid:'404'},ethiopia:{lat:8,lng:39,cid:'231'},tanzania:{lat:-6,lng:35,cid:'834'}}},
+    {q:'コートジボワール はどこですか？', ans:'ivory', spots:{ivory:{lat:7,lng:-5.5,cid:'384'},ethiopia:{lat:8,lng:39,cid:'231'},kenya:{lat:-0.5,lng:37.5,cid:'404'},tanzania:{lat:-6,lng:35,cid:'834'}}},
+    {q:'イエメン はどこですか？', ans:'yemen', spots:{yemen:{lat:15.5,lng:45,cid:'887'},ethiopia:{lat:8,lng:39,cid:'231'},kenya:{lat:-0.5,lng:37.5,cid:'404'},ivory:{lat:7,lng:-5.5,cid:'384'}}},
+  ],
+  ethiopia: [
+    {q:'レケンプティ はどこですか？', ans:'lekempti', spots:{lekempti:{lat:9,lng:36.5},jima:{lat:7.7,lng:36.8},harar:{lat:9.3,lng:42.1},sidamo:{lat:6.2,lng:38.5}}},
+    {q:'ジマ はどこですか？', ans:'jima', spots:{jima:{lat:7.7,lng:36.8},lekempti:{lat:9,lng:36.5},sidamo:{lat:6.2,lng:38.5},harar:{lat:9.3,lng:42.1}}},
+    {q:'シダモ はどこですか？', ans:'sidamo', spots:{sidamo:{lat:6.2,lng:38.5},yirgacheffe:{lat:6.3,lng:38.2},jima:{lat:7.7,lng:36.8},harar:{lat:9.3,lng:42.1}}},
+    {q:'イルガチェフ はどこですか？', ans:'yirgacheffe', spots:{yirgacheffe:{lat:6.3,lng:38.2},sidamo:{lat:6.2,lng:38.5},jima:{lat:7.7,lng:36.8},lekempti:{lat:9,lng:36.5}}},
+    {q:'ハラー はどこですか？', ans:'harar', spots:{harar:{lat:9.3,lng:42.1},lekempti:{lat:9,lng:36.5},yirgacheffe:{lat:6.3,lng:38.2},sidamo:{lat:6.2,lng:38.5}}},
+    {q:'コーヒー（coffee）の語源カファに最も近い産地はどこですか？', ans:'jima', spots:{jima:{lat:7.7,lng:36.8},lekempti:{lat:9,lng:36.5},harar:{lat:9.3,lng:42.1},sidamo:{lat:6.2,lng:38.5}}},
+  ],
+  tanzania: [
+    {q:'ンゴロンゴロクレーター はどこですか？', ans:'ngorongoro', spots:{ngorongoro:{lat:-3.2,lng:35.5},arusha:{lat:-3.4,lng:36.7},moshi:{lat:-3.35,lng:37.3},bukoba:{lat:-1.3,lng:31.8}}},
+    {q:'アルーシャ はどこですか？', ans:'arusha', spots:{arusha:{lat:-3.4,lng:36.7},ngorongoro:{lat:-3.2,lng:35.5},moshi:{lat:-3.35,lng:37.3},bukoba:{lat:-1.3,lng:31.8}}},
+    {q:'モシ はどこですか？', ans:'moshi', spots:{moshi:{lat:-3.35,lng:37.3},arusha:{lat:-3.4,lng:36.7},ngorongoro:{lat:-3.2,lng:35.5},mbinga:{lat:-10.8,lng:35}}},
+    {q:'ブコバ はどこですか？', ans:'bukoba', spots:{bukoba:{lat:-1.3,lng:31.8},ngorongoro:{lat:-3.2,lng:35.5},mbeya:{lat:-8.9,lng:33.4},arusha:{lat:-3.4,lng:36.7}}},
+    {q:'ンベア はどこですか？', ans:'mbeya', spots:{mbeya:{lat:-8.9,lng:33.4},mbinga:{lat:-10.8,lng:35},bukoba:{lat:-1.3,lng:31.8},oldiani:{lat:-3.4,lng:35.7}}},
+    {q:'ンビンガ はどこですか？', ans:'mbinga', spots:{mbinga:{lat:-10.8,lng:35},mbeya:{lat:-8.9,lng:33.4},moshi:{lat:-3.35,lng:37.3},arusha:{lat:-3.4,lng:36.7}}},
+    {q:'オルディアニ はどこですか？', ans:'oldiani', spots:{oldiani:{lat:-3.4,lng:35.7},ngorongoro:{lat:-3.2,lng:35.5},arusha:{lat:-3.4,lng:36.7},mbeya:{lat:-8.9,lng:33.4}}},
+  ]
+};
+
+/* ===== INTERNAL STATE/DEPARTMENT BORDERS ===== */
+const INTERNAL_BORDERS = {
+  brazil: [
+    /* Bahia - Minas Gerais border (west to east) */
+    [[-46.6,-14.5],[-45.5,-14.8],[-44.5,-14.9],[-43.5,-15.0],[-42.5,-15.0],[-41.5,-15.2],[-41.0,-15.5],[-40.5,-14.8],[-40.0,-14.3],[-39.5,-13.5],[-39.0,-13.0]],
+    /* Minas Gerais - Espírito Santo border (north to south) */
+    [[-40.0,-17.7],[-40.3,-18.2],[-40.7,-18.8],[-41.0,-19.5],[-41.2,-20.2],[-41.5,-20.8],[-41.8,-21.5],[-41.5,-22.2]],
+    /* Minas Gerais - São Paulo border */
+    [[-47.2,-20.0],[-46.5,-20.3],[-46.0,-20.8],[-45.5,-21.5],[-45.0,-22.0],[-44.5,-22.5],[-44.2,-22.7],[-43.5,-22.5],[-42.5,-22.3],[-41.5,-22.2]],
+    /* São Paulo - Paraná border */
+    [[-53.5,-22.7],[-52.0,-22.5],[-51.0,-22.6],[-50.5,-22.7],[-50.0,-22.5],[-49.5,-22.7],[-49.0,-23.2],[-48.5,-24.0],[-48.0,-25.0]],
+    /* Minas Gerais - Goiás border (western MG) */
+    [[-46.6,-14.5],[-47.0,-15.5],[-47.5,-16.5],[-48.0,-17.5],[-47.8,-18.5],[-47.2,-20.0]],
+    /* Bahia - Espírito Santo border (short) */
+    [[-40.0,-17.7],[-39.7,-17.3],[-39.5,-16.5],[-39.3,-15.8],[-39.5,-15.5],[-39.5,-15.2],[-39.5,-13.5]],
+    /* Rio de Janeiro borders */
+    [[-41.5,-22.2],[-42.0,-22.5],[-43.0,-22.7],[-43.5,-23.0],[-44.0,-23.0],[-44.5,-22.8],[-44.2,-22.7]],
+    [[-41.5,-22.2],[-41.8,-22.5],[-42.0,-22.8],[-43.0,-23.0],[-43.5,-23.0]]
+  ],
+  colombia: [
+    /* Magdalena region (northern coast) */
+    [[-75.5,11.0],[-74.5,11.0],[-73.5,10.5],[-73.5,9.5],[-74.0,9.0],[-74.5,9.5],[-75.0,10.0],[-75.5,11.0]],
+    /* Santander region */
+    [[-73.8,8.5],[-73.0,8.0],[-72.8,7.5],[-73.0,7.0],[-73.2,6.5],[-73.5,6.2],[-74.0,6.5],[-74.2,7.0],[-74.0,7.5],[-73.8,8.0],[-73.8,8.5]],
+    /* Antioquia/Medellín region */
+    [[-76.5,7.5],[-76.0,7.0],[-75.5,6.5],[-75.0,6.0],[-75.2,5.5],[-75.8,5.5],[-76.2,6.0],[-76.5,6.5],[-76.8,7.0],[-76.5,7.5]],
+    /* Coffee axis: Caldas-Quindío-Risaralda */
+    [[-76.0,5.5],[-75.5,5.3],[-75.2,5.0],[-75.0,4.5],[-75.3,4.2],[-75.8,4.3],[-76.0,4.7],[-76.0,5.5]],
+    /* Cundinamarca region */
+    [[-74.8,5.2],[-74.2,5.0],[-73.8,4.5],[-73.8,4.0],[-74.2,3.8],[-74.8,4.0],[-75.0,4.5],[-74.8,5.2]],
+    /* Tolima region */
+    [[-75.8,4.3],[-75.5,4.0],[-75.2,3.5],[-75.0,3.0],[-75.3,2.8],[-75.8,3.0],[-76.0,3.5],[-75.8,4.3]],
+    /* Huila region */
+    [[-76.0,3.5],[-75.5,3.2],[-75.3,2.8],[-75.5,2.2],[-76.0,2.0],[-76.3,2.5],[-76.0,3.0],[-76.0,3.5]],
+    /* Cauca/Popayán region */
+    [[-77.0,3.2],[-76.5,3.0],[-76.3,2.5],[-76.0,2.0],[-76.5,1.5],[-77.0,1.8],[-77.2,2.5],[-77.0,3.2]],
+    /* Nariño region */
+    [[-78.0,2.0],[-77.5,1.8],[-77.0,1.5],[-77.0,0.8],[-77.5,0.5],[-78.0,0.8],[-78.2,1.5],[-78.0,2.0]]
+  ]
+};
+
+/* ===== GLOBALS ===== */
+let curRegion='central_south_america', qs=[], qi=0, sc=0, done=false;
+let worldData=null, countriesGeo=null;
+
+/* ===== INIT ===== */
+function initTabs(){
+  const bar=document.getElementById('tabBar');
+  Object.entries(REGIONS).forEach(([k,v])=>{
+    const b=document.createElement('button');
+    b.className='tab'+(k===curRegion?' active':'');
+    b.textContent=v.label;
+    b.onclick=()=>go(k);
+    bar.appendChild(b);
+  });
+}
+
+function go(k){
+  curRegion=k;
+  document.querySelectorAll('.tab').forEach((t,i)=>{
+    t.classList.toggle('active',Object.keys(REGIONS)[i]===k);
+  });
+  start();
+}
+
+function shuffle(a){
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.random()*(i+1)|0;
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+function start(){
+  /* Collect all questions from all maps in this region */
+  const region=REGIONS[curRegion];
+  qs=[];
+  region.maps.forEach(mapKey=>{
+    const questions=ALL_QUESTIONS[mapKey];
+    if(questions){
+      questions.forEach(q=>{
+        qs.push({...q, _mapKey: mapKey});
+      });
+    }
+  });
+  qs=shuffle(qs);
+  qi=0;sc=0;done=false;
+  document.getElementById('res').style.display='none';
+  document.getElementById('nxt').style.display='none';
+  render();
+}
+
+/* ===== MAP RENDERING ===== */
+function renderMap(mapKey, spotKeys, q){
+  const wrap=document.getElementById('mapWrap');
+  wrap.innerHTML='';
+
+  const cfg=MAP_CFG[mapKey];
+  document.getElementById('subLabel').textContent=cfg.subLabel;
+
+  const W=wrap.clientWidth||360;
+  const bounds=cfg.bounds;
+  const geoW=bounds[1][0]-bounds[0][0];
+  const geoH=bounds[1][1]-bounds[0][1];
+  const centerLat=(bounds[0][1]+bounds[1][1])/2;
+  const latStretch=1/Math.cos(centerLat*Math.PI/180);
+  const H=Math.min(Math.round(W*(geoH*latStretch)/geoW), Math.round(W*0.85));
+
+  const svg=d3.select(wrap).append('svg')
+    .attr('width',W).attr('height',H)
+    .attr('viewBox',`0 0 ${W} ${H}`)
+    .style('background','#111118')
+    .style('border-radius','10px');
+
+  /* Manual center + scale for reliable zoom */
+  const cLng=(bounds[0][0]+bounds[1][0])/2;
+  const cLat=(bounds[0][1]+bounds[1][1])/2;
+  const projection=d3.geoMercator()
+    .center([cLng,cLat])
+    .translate([W/2,H/2])
+    .scale(150);
+  /* Calculate required scale to fit bounds with 5% padding */
+  const tl=projection([bounds[0][0],bounds[1][1]]);
+  const br=projection([bounds[1][0],bounds[0][1]]);
+  const curW=Math.abs(br[0]-tl[0]);
+  const curH=Math.abs(br[1]-tl[1]);
+  const fitScale=150*Math.min((W*0.9)/curW,(H*0.9)/curH);
+  projection.scale(fitScale);
+
+  const path=d3.geoPath().projection(projection);
+
+  /* Draw all countries */
+  const countryGroup=svg.append('g');
+  countriesGeo.features.forEach(f=>{
+    countryGroup.append('path')
+      .datum(f)
+      .attr('d',path)
+      .attr('class','country')
+      .attr('data-id',f.id);
+  });
+
+  /* Internal state/department borders */
+  const borderKey = mapKey==='brazil'?'brazil': mapKey==='colombia'?'colombia': null;
+  if(borderKey && INTERNAL_BORDERS[borderKey]){
+    INTERNAL_BORDERS[borderKey].forEach(coords=>{
+      const lineGeo={type:'Feature',geometry:{type:'LineString',coordinates:coords},properties:{}};
+      svg.append('path')
+        .datum(lineGeo)
+        .attr('d',path)
+        .attr('class','internal-border');
+    });
+  }
+
+  /* Equator line */
+  if(cfg.equator){
+    const eqLine={type:'Feature',geometry:{type:'LineString',coordinates:[[-180,0],[180,0]]},properties:{}};
+    svg.append('path')
+      .datum(eqLine)
+      .attr('d',path)
+      .attr('class','equator');
+  }
+
+  /* Region dots (all locations shown as black dots for orientation) */
+  if(cfg.regionDots){
+    cfg.regionDots.forEach(rd=>{
+      const [dx,dy]=projection([rd.lng,rd.lat]);
+      if(isNaN(dx)||isNaN(dy))return;
+      svg.append('circle')
+        .attr('class','region-dot')
+        .attr('cx',dx).attr('cy',dy)
+        .attr('r',4);
+    });
+  }
+
+  /* Reference labels (non-quiz place names with box) */
+  if(cfg.refLabels){
+    cfg.refLabels.forEach(rl=>{
+      const [rx,ry]=projection([rl.lng,rl.lat]);
+      if(isNaN(rx)||isNaN(ry))return;
+      const cls='ref-label'+(rl.italic?' italic':'')+(rl.small?' small':'');
+      /* Temporary text to measure width */
+      const tmp=svg.append('text').attr('class',cls).text(rl.text).style('visibility','hidden');
+      const bbox=tmp.node().getBBox();
+      tmp.remove();
+      /* Background box */
+      svg.append('rect')
+        .attr('class','ref-bg')
+        .attr('x',rx-bbox.width/2-3).attr('y',ry-bbox.height/2-2)
+        .attr('width',bbox.width+6).attr('height',bbox.height+4);
+      /* Text */
+      svg.append('text')
+        .attr('class',cls)
+        .attr('x',rx).attr('y',ry)
+        .text(rl.text);
+    });
+  }
+
+  /* Pin markers - small dot + smart label placement */
+  const dotR=3;
+  /* Project all spots first for collision detection */
+  const projected=spotKeys.map((key)=>{
+    const spot=q.spots[key];
+    const [px,py]=projection([spot.lng,spot.lat]);
+    return {key,px,py};
+  });
+
+  /* 8 directions for label offset */
+  const DIRS=[
+    {dx:6,dy:0,anchor:'start'},     /* E */
+    {dx:5,dy:-6,anchor:'start'},    /* NE */
+    {dx:-6,dy:0,anchor:'end'},      /* W */
+    {dx:5,dy:8,anchor:'start'},     /* SE */
+    {dx:-5,dy:-6,anchor:'end'},     /* NW */
+    {dx:-5,dy:8,anchor:'end'},      /* SW */
+    {dx:0,dy:-8,anchor:'middle'},   /* N */
+    {dx:0,dy:10,anchor:'middle'},   /* S */
+  ];
+
+  /* For each pin, pick the direction with least overlap to other pins */
+  const labelPlacements=projected.map((p,i)=>{
+    let bestDir=DIRS[0], bestScore=Infinity;
+    DIRS.forEach(dir=>{
+      const lx=p.px+dir.dx, ly=p.py+dir.dy;
+      let score=0;
+      projected.forEach((other,j)=>{
+        if(i===j)return;
+        const dist=Math.hypot(lx-other.px,ly-other.py);
+        if(dist<20) score+=20-dist;
+      });
+      if(score<bestScore){bestScore=score;bestDir=dir;}
+    });
+    return bestDir;
+  });
+
+  spotKeys.forEach((key,i)=>{
+    const {px,py}=projected[i];
+    if(isNaN(px)||isNaN(py))return;
+    const dir=labelPlacements[i];
+
+    const g=svg.append('g')
+      .attr('class','pin-group')
+      .attr('data-idx',i)
+      .attr('data-key',key)
+      .style('cursor','pointer')
+      .on('click',()=>pick(i));
+
+    /* Invisible click target */
+    g.append('circle')
+      .attr('cx',px).attr('cy',py)
+      .attr('r',18)
+      .attr('fill','transparent');
+
+    /* Small dot */
+    g.append('circle')
+      .attr('class','pin-dot')
+      .attr('cx',px).attr('cy',py)
+      .attr('r',dotR)
+      .attr('fill',PIN_COLORS[i]);
+
+    /* Label with smart direction */
+    g.append('text')
+      .attr('class','pin-label')
+      .attr('x',px+dir.dx).attr('y',py+dir.dy)
+      .attr('text-anchor',dir.anchor)
+      .text(LABELS[i]);
+  });
+
+  return {projection, svg, cfg, spotKeys, q};
+}
+
+/* ===== QUIZ ENGINE ===== */
+let currentRender=null;
+
+function render(){
+  if(qi>=qs.length){showResult();return;}
+  done=false;
+  const q=qs[qi],total=qs.length;
+  document.getElementById('pb').style.width=((qi/total)*100)+'%';
+  document.getElementById('sc').textContent=`問題 ${qi+1} / ${total}　正解: ${sc}`;
+  document.getElementById('qText').innerHTML=q.q;
+
+  const spotKeys=shuffle(Object.keys(q.spots));
+  window._spotKeys=spotKeys;
+  window._ansIdx=spotKeys.indexOf(q.ans);
+
+  currentRender=renderMap(q._mapKey, spotKeys, q);
+
+  const ch=document.getElementById('ch');ch.innerHTML='';
+  spotKeys.forEach((key,i)=>{
+    const btn=document.createElement('button');
+    btn.className='c-btn';
+    btn.innerHTML=`<span class="c-badge" style="background:${PIN_COLORS[i]};color:#1a1a2e">${LABELS[i]}</span>`;
+    btn.dataset.idx=i;
+    btn.onclick=()=>pick(i);
+    ch.appendChild(btn);
+  });
+
+  document.getElementById('fb').className='fb hidden';
+  document.getElementById('nxt').style.display='none';
+}
+
+function pick(idx){
+  if(done)return;done=true;
+  const correct=idx===window._ansIdx;
+  if(correct)sc++;
+
+  const {svg,cfg,spotKeys,q}=currentRender;
+  const ansKey=spotKeys[window._ansIdx];
+  const wrongKey=spotKeys[idx];
+
+  if(cfg.showCountryHighlight){
+    const ansCid=q.spots[ansKey].cid;
+    if(ansCid){
+      svg.selectAll('.country').filter(d=>d.id===ansCid)
+        .classed('highlight-correct',true);
+    }
+    if(!correct){
+      const wrongCid=q.spots[wrongKey].cid;
+      if(wrongCid){
+        svg.selectAll('.country').filter(d=>d.id===wrongCid)
+          .classed('highlight-wrong',true);
+      }
+    }
+  }
+
+  svg.selectAll('.pin-group').each(function(){
+    const g=d3.select(this);
+    const gIdx=parseInt(g.attr('data-idx'));
+    if(gIdx===window._ansIdx) g.classed('correct',true);
+    else if(gIdx===idx&&!correct) g.classed('wrong',true);
+  });
+
+  document.querySelectorAll('.c-btn').forEach(b=>{
+    b.disabled=true;
+    const bi=parseInt(b.dataset.idx);
+    if(bi===window._ansIdx)b.classList.add('correct');
+    else if(bi===idx&&!correct)b.classList.add('wrong');
+  });
+
+  const fb=document.getElementById('fb'),al=LABELS[window._ansIdx];
+  fb.className='fb '+(correct?'ok':'ng');
+  fb.textContent=correct?`✅ 正解！（${al}）`:`❌ 不正解… 正解は ${al} です`;
+
+  const nxt=document.getElementById('nxt');
+  nxt.style.display='block';
+  nxt.textContent=qi+1<qs.length?'次の問題へ →':'結果を見る';
+}
+
+function next(){qi++;render();}
+
+function showResult(){
+  const total=qs.length,pct=Math.round(sc/total*100);
+  document.getElementById('pb').style.width='100%';
+  document.getElementById('sc').textContent='完了！';
+  document.getElementById('qText').textContent='クイズ終了';
+  document.getElementById('subLabel').textContent='';
+  document.getElementById('ch').innerHTML='';
+  document.getElementById('fb').className='fb hidden';
+  document.getElementById('nxt').style.display='none';
+  document.getElementById('res').style.display='block';
+  let msg='';
+  if(pct===100)msg='🎉 満点！完璧な地図力です！';
+  else if(pct>=80)msg='👏 優秀！あと少しで完璧！';
+  else if(pct>=60)msg='📚 まずまず。苦手な地域を復習しましょう。';
+  else msg='🗺️ もう一度地図を確認してみましょう。';
+  document.getElementById('resT').innerHTML=`${sc} / ${total} 問正解（${pct}%）<br>${msg}`;
+}
+
+/* ===== LOAD DATA AND START ===== */
+initTabs();
+Promise.all([
+  d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json')
+    .catch(()=>d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json'))
+]).then(([world])=>{
+  worldData=world;
+  countriesGeo=topojson.feature(world,world.objects.countries);
+  document.getElementById('loadMsg')&&(document.getElementById('loadMsg').remove());
+  start();
+}).catch(err=>{
+  document.getElementById('loadMsg').textContent='❌ 地図データの読み込みに失敗しました。インターネット接続を確認してください。';
+  console.error(err);
+});
+</script>
+</body>
+</html>

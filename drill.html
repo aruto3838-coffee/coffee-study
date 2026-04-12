@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>コーヒー1級 苦手ドリル</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#1a1a2e;--card:#16213e;--accent:#c8a96e;--accent2:#e8d5a8;--text:#e0e0e0;--text2:#999;--ok:#4caf50;--ng:#e74c3c}
+html,body{min-height:100%;font-family:'Helvetica Neue','Hiragino Sans',sans-serif;background:var(--bg);color:var(--text)}
+.container{max-width:540px;margin:0 auto;padding:12px 14px 80px}
+
+/* Header */
+.top-bar{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.top-bar a{text-decoration:none;font-size:18px;color:var(--accent);opacity:0.7}
+.top-bar h1{font-size:17px;font-weight:700;color:var(--accent2);flex:1}
+.score-badge{font-size:12px;color:var(--ok);background:rgba(76,175,80,0.15);padding:4px 10px;border-radius:12px}
+
+/* Tabs */
+.tabs{display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px}
+.tab{
+  flex-shrink:0;padding:8px 14px;border-radius:12px;font-size:13px;font-weight:600;
+  background:rgba(200,169,110,0.1);border:1px solid rgba(200,169,110,0.2);
+  color:var(--text2);cursor:pointer;-webkit-tap-highlight-color:transparent;
+}
+.tab.active{background:rgba(200,169,110,0.25);border-color:var(--accent);color:var(--accent2)}
+
+/* Section */
+.section{display:none}
+.section.active{display:block}
+.section-title{font-size:15px;font-weight:700;color:var(--accent2);margin:16px 0 8px;display:flex;align-items:center;gap:8px}
+.section-title .page-ref{font-size:11px;color:var(--text2);font-weight:400}
+.section-desc{font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.6}
+
+/* Textbook-style card */
+.tb-card{
+  background:var(--card);border:1px solid rgba(200,169,110,0.15);
+  border-radius:14px;padding:16px;margin-bottom:14px;
+}
+.tb-card-title{
+  font-size:13px;font-weight:700;color:var(--accent);
+  background:rgba(200,169,110,0.1);padding:6px 12px;border-radius:8px;
+  margin:-16px -16px 14px;border-bottom:1px solid rgba(200,169,110,0.15);
+  border-radius:14px 14px 0 0;
+}
+
+/* Blank (穴埋め) */
+.blank{
+  display:inline-block;min-width:50px;padding:3px 8px;margin:2px 2px;
+  background:rgba(200,169,110,0.12);border:1.5px dashed var(--accent);
+  border-radius:6px;text-align:center;font-size:12px;font-weight:700;
+  color:transparent;cursor:pointer;transition:all 0.2s;
+  -webkit-tap-highlight-color:transparent;user-select:none;
+}
+.blank.revealed{color:var(--ok);border-color:var(--ok);border-style:solid;background:rgba(76,175,80,0.1)}
+.blank.wrong{color:var(--ng);border-color:var(--ng);border-style:solid;background:rgba(231,76,60,0.1)}
+
+/* Flowchart */
+.flow{display:flex;flex-direction:column;align-items:center;gap:0;margin:12px 0}
+.flow-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center}
+.flow-box{
+  padding:6px 12px;border:1.5px solid rgba(200,169,110,0.4);border-radius:8px;
+  font-size:12px;text-align:center;background:rgba(200,169,110,0.05);
+  min-width:60px;
+}
+.flow-arrow{color:var(--accent);font-size:14px;flex-shrink:0}
+.flow-arrow-down{color:var(--accent);font-size:12px;margin:4px 0}
+.flow-label{font-size:11px;color:var(--text2);margin-top:2px;text-align:center}
+
+/* Table */
+.tb-table{width:100%;border-collapse:collapse;font-size:11px;margin:8px 0}
+.tb-table th{
+  background:rgba(200,169,110,0.15);color:var(--accent2);font-weight:600;
+  padding:6px 4px;border:1px solid rgba(200,169,110,0.2);text-align:center;
+  position:sticky;top:0;font-size:11px;
+}
+.tb-table td{
+  padding:5px 4px;border:1px solid rgba(200,169,110,0.12);text-align:center;
+  vertical-align:middle;font-size:11px;
+}
+.tb-table tr:nth-child(even){background:rgba(255,255,255,0.02)}
+.country-name{text-align:left;font-weight:600;color:var(--accent2);white-space:nowrap;padding-left:8px}
+
+/* Diagram: 温度プロファイル */
+.temp-chart{position:relative;width:100%;height:160px;margin:10px 0;border-left:2px solid var(--text2);border-bottom:2px solid var(--text2)}
+.temp-legend{display:flex;gap:12px;justify-content:center;margin-top:24px;font-size:11px;flex-wrap:wrap}
+.temp-legend span{display:flex;align-items:center;gap:4px}
+
+/* Component category box */
+.cat-box{
+  background:rgba(200,169,110,0.05);border:1px solid rgba(200,169,110,0.15);
+  border-radius:10px;padding:10px 12px;margin:6px 0;
+}
+.cat-title{font-size:12px;font-weight:700;margin-bottom:4px}
+.cat-title.up{color:var(--ng)}
+.cat-title.down{color:#5b9bd5}
+.cat-title.stable{color:var(--ok)}
+.cat-items{font-size:11px;line-height:1.7;color:var(--text)}
+
+/* Bottom controls */
+.bottom-fixed{
+  position:fixed;bottom:0;left:0;right:0;
+  background:linear-gradient(0deg,var(--bg) 80%,transparent);
+  padding:10px 14px 16px;display:flex;gap:8px;justify-content:center;
+  max-width:540px;margin:0 auto;width:100%;
+}
+.ctrl-btn{
+  padding:10px 18px;border-radius:16px;font-size:12px;font-weight:600;
+  border:1px solid rgba(200,169,110,0.3);cursor:pointer;
+  -webkit-tap-highlight-color:transparent;white-space:nowrap;
+}
+.ctrl-btn.primary{background:rgba(200,169,110,0.2);color:var(--accent2)}
+.ctrl-btn.secondary{background:transparent;color:var(--accent)}
+
+/* Diagram boxes */
+.box-row{display:flex;gap:8px;margin:8px 0;justify-content:center;flex-wrap:wrap}
+.box{padding:8px 12px;border:1.5px solid rgba(200,169,110,0.3);border-radius:6px;font-size:12px;background:rgba(200,169,110,0.05);min-width:80px;text-align:center}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="top-bar">
+  <a href="index.html">&#9664;</a>
+  <h1>☕ 苦手ドリル</h1>
+  <span class="score-badge" id="scoreBadge">0 / 0</span>
+</div>
+
+<div class="tabs" id="tabs">
+  <div class="tab active" onclick="switchTab(0)">🌍 生産国</div>
+  <div class="tab" onclick="switchTab(1)">📊 格付け</div>
+  <div class="tab" onclick="switchTab(2)">🏷️ 銘柄</div>
+  <div class="tab" onclick="switchTab(3)">🌱 品種</div>
+  <div class="tab" onclick="switchTab(4)">⚙️ 精選</div>
+  <div class="tab" onclick="switchTab(5)">🧪 成分</div>
+  <div class="tab" onclick="switchTab(6)">🔥 焙煎</div>
+  <div class="tab" onclick="switchTab(7)">🎨 褐色色素</div>
+  <div class="tab" onclick="switchTab(8)">☕ 抽出</div>
+  <div class="tab" onclick="switchTab(9)">📦 粉砕・包装</div>
+  <div class="tab" onclick="switchTab(10)">🏆 カップテスト</div>
+  <div class="tab" onclick="switchTab(11)">📚 周辺知識</div>
+</div>
+
+<!-- ===== SECTION 0: 生産国 ===== -->
+<div class="section active" id="sec0">
+  <div class="section-title">🌍 生産国と処理方法 <span class="page-ref">教本 第1部</span></div>
+  <div class="section-desc">コーヒーの主要生産国と処理方法。</div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">品種比率</div>
+    <div style="font-size:13px;line-height:1.8">
+      アラビカ種：約<span class="blank" data-a="60">？？</span>％<br>
+      カネフォラ種：約<span class="blank" data-a="40">？？</span>％
+    </div>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">コーヒーベルト</div>
+    <div style="font-size:13px;line-height:1.8">
+      赤道を中心に南北約<span class="blank" data-a="25">？？</span>度の範囲
+    </div>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">カネフォラ生産量ランキング（千袋）</div>
+    <table class="tb-table">
+      <tr><th>順位</th><th>国</th><th>生産量</th></tr>
+      <tr><td>1位</td><td class="country-name"><span class="blank" data-a="ベトナム">？？？</span></td><td><span class="blank" data-a="27,275">？？？？</span></td></tr>
+      <tr><td>2位</td><td class="country-name"><span class="blank" data-a="ブラジル">？？？</span></td><td><span class="blank" data-a="不明">？？</span></td></tr>
+      <tr><td>3位</td><td class="country-name"><span class="blank" data-a="インドネシア">？？？？</span></td><td><span class="blank" data-a="10,000">？？？？</span></td></tr>
+      <tr><td>4位</td><td class="country-name"><span class="blank" data-a="インド">？？</span></td><td><span class="blank" data-a="5,170">？？？？</span></td></tr>
+    </table>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">アラビカ生産量ランキング（千袋）</div>
+    <table class="tb-table">
+      <tr><th>順位</th><th>国</th><th>生産量</th></tr>
+      <tr><td>1位</td><td class="country-name"><span class="blank" data-a="ブラジル">？？？</span></td><td><span class="blank" data-a="55,950">？？？？</span></td></tr>
+      <tr><td>2位</td><td class="country-name"><span class="blank" data-a="コロンビア">？？？？</span></td><td><span class="blank" data-a="13,300">？？？？</span></td></tr>
+      <tr><td>3位</td><td class="country-name"><span class="blank" data-a="エチオピア">？？？？</span></td><td><span class="blank" data-a="6,500">？？？？</span></td></tr>
+      <tr><td>4位</td><td class="country-name"><span class="blank" data-a="ホンジュラス">？？？？</span></td><td><span class="blank" data-a="6,100">？？？？</span></td></tr>
+    </table>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">日本への輸入ランキング（千袋）</div>
+    <table class="tb-table">
+      <tr><th>順位</th><th>国</th><th>輸入量</th></tr>
+      <tr><td>1位</td><td class="country-name"><span class="blank" data-a="ブラジル">？？？</span></td><td><span class="blank" data-a="2,335">？？？？</span></td></tr>
+      <tr><td>2位</td><td class="country-name"><span class="blank" data-a="ベトナム">？？？</span></td><td><span class="blank" data-a="1,354">？？？？</span></td></tr>
+      <tr><td>3位</td><td class="country-name"><span class="blank" data-a="コロンビア">？？？？</span></td><td><span class="blank" data-a="1,315">？？？？</span></td></tr>
+      <tr><td>4位</td><td class="country-name"><span class="blank" data-a="グアテマラ">？？？？</span></td><td><span class="blank" data-a="532">？？？</span></td></tr>
+      <tr><td>5位</td><td class="country-name"><span class="blank" data-a="インドネシア">？？？？</span></td><td><span class="blank" data-a="689">？？？</span></td></tr>
+    </table>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">主要国の収穫期</div>
+    <table class="tb-table">
+      <tr><th>国</th><th>収穫期</th></tr>
+      <tr><td class="country-name"><span class="blank" data-a="コロンビア">？？？？</span></td><td><span class="blank" data-a="年2回">？？？</span></td></tr>
+      <tr><td class="country-name"><span class="blank" data-a="ブラジル">？？？</span></td><td><span class="blank" data-a="5-9月">？？？</span></td></tr>
+      <tr><td class="country-name"><span class="blank" data-a="エチオピア">？？？？</span></td><td><span class="blank" data-a="9-12月">？？？？</span></td></tr>
+    </table>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">コーヒーチェリーの構造（内側から）</div>
+    <div class="box-row">
+      <div class="box"><span class="blank" data-a="外果皮">？？？</span></div>
+      <div style="color:var(--accent)">→</div>
+      <div class="box"><span class="blank" data-a="果肉">？？</span></div>
+      <div style="color:var(--accent)">→</div>
+      <div class="box"><span class="blank" data-a="パーチメント">？？？？</span></div>
+      <div style="color:var(--accent)">→</div>
+      <div class="box"><span class="blank" data-a="ミューシレージ">？？？？？</span></div>
+      <div style="color:var(--accent)">→</div>
+      <div class="box"><span class="blank" data-a="種子">？？</span></div>
+    </div>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">豆の形状分類</div>
+    <div style="font-size:13px;line-height:1.8">
+      フラットビーン：<span class="blank" data-a="90-95">？？？</span>％<br>
+      ピーベリー：<span class="blank" data-a="5-20">？？？</span>％
+    </div>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">処理方法4種</div>
+    <table class="tb-table">
+      <tr><th>方法</th><th>特徴</th><th>代表国</th></tr>
+      <tr>
+        <td><span class="blank" data-a="非水洗式">？？？？</span></td>
+        <td>チェリーのまま乾燥→一括脱殻</td>
+        <td><span class="blank" data-a="ブラジル,エチオピア">？？？？？？？？</span></td>
+      </tr>
+      <tr>
+        <td><span class="blank" data-a="水洗式">？？？</span></td>
+        <td>パルピング→発酵→水洗→乾燥→脱殻</td>
+        <td><span class="blank" data-a="コロンビア,中米">？？？？？？？？</span></td>
+      </tr>
+      <tr>
+        <td><span class="blank" data-a="パルプドナチュラル">？？？？？？？</span></td>
+        <td>果肉除去→ミューシレージ付き乾燥</td>
+        <td><span class="blank" data-a="ブラジル">？？？</span></td>
+      </tr>
+      <tr>
+        <td><span class="blank" data-a="スマトラ式">？？？？</span></td>
+        <td>果肉除去→半乾燥で脱殻→本乾燥</td>
+        <td><span class="blank" data-a="インドネシア">？？？？</span></td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<!-- ===== SECTION 1: 格付け ===== -->
+<div class="section" id="sec1">
+  <div class="section-title">📊 格付けシステム <span class="page-ref">教本 第1部</span></div>
+  <div class="section-desc">各国のグレード基準。欠点数とスクリーンサイズを暗記。</div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">標高格付け（スペシャルティの基準）</div>
+    <table class="tb-table">
+      <tr><th>国</th><th>グレード</th><th>標高</th></tr>
+      <tr><td class="country-name"><span class="blank" data-a="グアテマラ">？？？？</span></td><td><span class="blank" data-a="SHB">？？？</span></td><td><span class="blank" data-a="1300m~">？？？？</span></td></tr>
+      <tr><td class="country-name"><span class="blank" data-a="エルサルバドル">？？？？？</span></td><td><span class="blank" data-a="SHG">？？？</span></td><td><span class="blank" data-a="1200m~">？？？？</span></td></tr>
+      <tr><td class="country-name"><span class="blank" data-a="ホンジュラス">？？？？</span></td><td><span class="blank" data-a="SHG">？？？</span></td><td><span class="blank" data-a="1200m~">？？？？</span></td></tr>
+      <tr><td class="country-name"><span class="blank" data-a="コスタリカ">？？？？</span></td><td><span class="blank" data-a="SHB">？？？</span></td><td><span class="blank" data-a="1200-1700m">？？？？？？</span></td></tr>
+      <tr><td class="country-name"><span class="blank" data-a="メキシコ">？？？</span></td><td><span class="blank" data-a="Altura">？？？？</span></td><td><span class="blank" data-a="900-1200m">？？？？？</span></td></tr>
+    </table>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">スクリーン格付け</div>
+    <table class="tb-table">
+      <tr><th>国</th><th>グレード</th><th>スクリーンサイズ</th></tr>
+      <tr><td class="country-name"><span class="blank" data-a="コロンビア">？？？？</span></td><td><span class="blank" data-a="スプレモ">？？？</span></td><td><span class="blank" data-a="S-17~">？？？？</span></td></tr>
+      <tr><td class="country-name"><span class="blank" data-a="コロンビア">？？？？</span></td><td><span class="blank" data-a="UGQ">？？？</span></td><td><span class="blank" data-a="S-14~">？？？？</span></td></tr>
+      <tr><td class="country-name"><span class="blank" data-a="ケニア">？？？</span></td><td><span class="blank" data-a="AA">？？</span></td><td><span class="blank" data-a="S-18~">？？？？</span></td></tr>
+      <tr><td class="country-name"><span class="blank" data-a="タンザニア">？？？？</span></td><td><span class="blank" data-a="AA">？？</span></td><td><span class="blank" data-a="S-18~">？？？？</span></td></tr>
+    </table>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">エチオピア 欠点数</div>
+    <table class="tb-table">
+      <tr><th>グレード</th><th>欠点数</th></tr>
+      <tr><td><span class="blank" data-a="G1">？？</span></td><td><span class="blank" data-a="~3">？？</span></td></tr>
+      <tr><td><span class="blank" data-a="G2">？？</span></td><td><span class="blank" data-a="4~12">？？？？</span></td></tr>
+      <tr><td><span class="blank" data-a="G3">？？</span></td><td><span class="blank" data-a="13~27">？？？？</span></td></tr>
+      <tr><td><span class="blank" data-a="G4">？？</span></td><td><span class="blank" data-a="28~45">？？？？</span></td></tr>
+      <tr><td><span class="blank" data-a="G5">？？</span></td><td><span class="blank" data-a="46~90">？？？？</span></td></tr>
+    </table>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">ペルー 欠点数</div>
+    <table class="tb-table">
+      <tr><th>グレード</th><th>欠点数</th></tr>
+      <tr><td><span class="blank" data-a="G1">？？</span></td><td><span class="blank" data-a="~15">？？？</span></td></tr>
+      <tr><td><span class="blank" data-a="G2">？？</span></td><td><span class="blank" data-a="~23">？？？</span></td></tr>
+      <tr><td><span class="blank" data-a="G3">？？</span></td><td><span class="blank" data-a="~30">？？？</span></td></tr>
+      <tr><td><span class="blank" data-a="G4">？？</span></td><td><span class="blank" data-a="~35">？？？</span></td></tr>
+      <tr><td><span class="blank" data-a="G5">？？</span></td><td><span class="blank" data-a="~40">？？？</span></td></tr>
+    </table>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">ブラジル</div>
+    <table class="tb-table">
+      <tr><th>グレード</th><th>欠点数</th><th>備考</th></tr>
+      <tr><td><span class="blank" data-a="No.2">？？？</span></td><td><span class="blank" data-a="4以内">？？？</span></td><td><span class="blank" data-a="最高等級">？？？</span></td></tr>
+      <tr><td><span class="blank" data-a="No.4">？？？</span></td><td><span class="blank" data-a="36以内">？？？？</span></td><td>最高がNo.2</td></tr>
+      <tr><td><span class="blank" data-a="No.5">？？？</span></td><td><span class="blank" data-a="欠点多い">？？？？</span></td><td>-</td></tr>
+    </table>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">ハワイ・コナ</div>
+    <table class="tb-table">
+      <tr><th>グレード</th><th>スクリーン</th><th>欠点数</th></tr>
+      <tr><td><span class="blank" data-a="エクストラファンシー">？？？？？？？</span></td><td><span class="blank" data-a="S-19">？？？？</span></td><td><span class="blank" data-a="8">？？</span></td></tr>
+      <tr><td><span class="blank" data-a="ファンシー">？？？？</span></td><td><span class="blank" data-a="S-18">？？？？</span></td><td><span class="blank" data-a="12">？？</span></td></tr>
+      <tr><td><span class="blank" data-a="No.1">？？？</span></td><td><span class="blank" data-a="S-16">？？？？</span></td><td><span class="blank" data-a="18">？？</span></td></tr>
+    </table>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">ジャマイカ ブルーマウンテン</div>
+    <table class="tb-table">
+      <tr><th>グレード</th><th>スクリーン</th><th>欠点数</th></tr>
+      <tr><td><span class="blank" data-a="No.1">？？？</span></td><td><span class="blank" data-a="S-17/18">？？？？？</span></td><td><span class="blank" data-a="~3">？？</span></td></tr>
+      <tr><td><span class="blank" data-a="No.2">？？？</span></td><td><span class="blank" data-a="S-16/17">？？？？？</span></td><td><span class="blank" data-a="~5">？？</span></td></tr>
+      <tr><td><span class="blank" data-a="No.3">？？？</span></td><td><span class="blank" data-a="S-15/16">？？？？？</span></td><td><span class="blank" data-a="~7">？？</span></td></tr>
+    </table>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">キューバ</div>
+    <table class="tb-table">
+      <tr><th>グレード</th><th>スクリーン</th><th>欠点数</th></tr>
+      <tr><td><span class="blank" data-a="ETL">？？？</span></td><td><span class="blank" data-a="S-18">？？？？</span></td><td><span class="blank" data-a="~12">？？？</span></td></tr>
+      <tr><td><span class="blank" data-a="TL">？？</span></td><td><span class="blank" data-a="S-17">？？？？</span></td><td><span class="blank" data-a="~19">？？？</span></td></tr>
+      <tr><td><span class="blank" data-a="AL">？？</span></td><td><span class="blank" data-a="S-16">？？？？</span></td><td><span class="blank" data-a="~22">？？？</span></td></tr>
+    </table>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">ベトナム</div>
+    <table class="tb-table">
+      <tr><th>グレード</th><th>スクリーン</th><th>欠点数</th></tr>
+      <tr><td><span class="blank" data-a="G1">？？</span></td><td><span class="blank" data-a="S-16~">？？？？</span></td><td><span class="blank" data-a="~60">？？？</span></td></tr>
+      <tr><td><span class="blank" data-a="G2">？？</span></td><td><span class="blank" data-a="S-12.5~">？？？？？</span></td><td><span class="blank" data-a="~90">？？？</span></td></tr>
+    </table>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">インドネシア</div>
+    <table class="tb-table">
+      <tr><th>処理</th><th>グレード</th><th>サイズ</th><th>欠点</th></tr>
+      <tr><td><span class="blank" data-a="非水洗">？？？</span></td><td><span class="blank" data-a="G1ラージ">？？？？？</span></td><td><span class="blank" data-a="7.5mm~">？？？？</span></td><td><span class="blank" data-a="~11">？？？</span></td></tr>
+      <tr><td><span class="blank" data-a="非水洗">？？？</span></td><td><span class="blank" data-a="G2スモール">？？？？</span></td><td>-</td><td><span class="blank" data-a="~25">？？？</span></td></tr>
+      <tr><td><span class="blank" data-a="水洗">？？</span></td><td><span class="blank" data-a="G3">？？</span></td><td>-</td><td><span class="blank" data-a="~44">？？？</span></td></tr>
+      <tr><td><span class="blank" data-a="水洗">？？</span></td><td><span class="blank" data-a="G4ミディアム">？？？？？</span></td><td>-</td><td><span class="blank" data-a="~80">？？？</span></td></tr>
+      <tr><td><span class="blank" data-a="水洗">？？</span></td><td><span class="blank" data-a="G5スモール">？？？？</span></td><td>-</td><td><span class="blank" data-a="~150">？？？</span></td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ===== SECTION 2: 特定銘柄 ===== -->
+<div class="section" id="sec2">
+  <div class="section-title">🏷️ 特定銘柄 <span class="page-ref">教本 第1部</span></div>
+  <div class="section-desc">地理的原産地表示（GI）を持つ銘柄。</div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">ジャマイカ</div>
+    <div style="font-size:13px;line-height:1.8">
+      <span class="blank" data-a="ブルーマウンテン">？？？？？？</span>：<span class="blank" data-a="BM地区">？？？？</span><br>
+      <span class="blank" data-a="ハイマウンテン">？？？？？</span>：<span class="blank" data-a="HM地区">？？？？</span>
+    </div>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">エチオピア</div>
+    <div style="font-size:13px;line-height:1.8">
+      <span class="blank" data-a="モカハラー">？？？？</span>：<span class="blank" data-a="ハラー地区">？？？？？</span>
+    </div>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">イエメン</div>
+    <div style="font-size:13px;line-height:1.8">
+      <span class="blank" data-a="モカマタリ">？？？？</span>
+    </div>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">タンザニア</div>
+    <div style="font-size:13px;line-height:1.8">
+      <span class="blank" data-a="キリマンジャロ">？？？？？？</span>
+      （<span class="blank" data-a="ブコバ地区を含まない">？？？？？？？？</span>）
+    </div>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">インドネシア</div>
+    <div style="font-size:13px;line-height:2">
+      <span class="blank" data-a="トラジャ">？？？</span>：<span class="blank" data-a="スラウェシ島トラジャ地区">？？？？？？？？？</span><br>
+      <span class="blank" data-a="カロシ">？？？</span>：<span class="blank" data-a="スラウェシ島カロシ地区">？？？？？？？？</span><br>
+      <span class="blank" data-a="ガヨマウンテン">？？？？？？</span>：<span class="blank" data-a="スマトラ島タケンゴン地区">？？？？？？？？</span><br>
+      <span class="blank" data-a="マンデリン">？？？？</span>：<span class="blank" data-a="北スマトラ州&アチェ州">？？？？？？？？</span>
+    </div>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">ハワイコナ</div>
+    <div style="font-size:13px;line-height:1.8">
+      <span class="blank" data-a="南コナ地区">？？？？</span>と<span class="blank" data-a="北コナ地区">？？？？</span>のみ
+    </div>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">認証制度</div>
+    <div style="font-size:13px;line-height:2">
+      <span class="blank" data-a="JAS有機">？？？？</span><br>
+      <span class="blank" data-a="フェアトレード">？？？？？</span>（<span class="blank" data-a="FLO">？？？</span>）<br>
+      <span class="blank" data-a="レインフォレストアライアンス">？？？？？？？？？</span><br>
+      <span class="blank" data-a="Q認証">？？？</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SECTION 3: 品種 ===== -->
+<div class="section" id="sec3">
+  <div class="section-title">🌱 生豆・品種 <span class="page-ref">教本 第1部</span></div>
+  <div class="section-desc">主要品種系統と栽培条件。</div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">品種系統図</div>
+    <div class="flow">
+      <div class="flow-row">
+        <div class="flow-box"><span class="blank" data-a="ティピカ">？？？</span></div>
+        <div class="flow-arrow">→ 突然変異 →</div>
+        <div class="flow-box"><span class="blank" data-a="ブルボン">？？？</span></div>
+      </div>
+      <div style="height:8px"></div>
+      <div class="flow-row">
+        <div class="flow-box"><span class="blank" data-a="ティピカ">？？？</span>突然変異</div>
+        <div class="flow-arrow">＋</div>
+        <div class="flow-box"><span class="blank" data-a="ブルボン">？？？</span></div>
+      </div>
+      <div class="flow-arrow-down">↓</div>
+      <div class="flow-row">
+        <div class="flow-box"><span class="blank" data-a="ムンドノーボ">？？？？？？</span></div>
+      </div>
+      <div style="height:8px"></div>
+      <div class="flow-row">
+        <div class="flow-box"><span class="blank" data-a="ブルボン">？？？</span></div>
+        <div class="flow-arrow">→ 矮性 →</div>
+        <div class="flow-box"><span class="blank" data-a="カトゥーラ">？？？？</span></div>
+      </div>
+      <div style="height:8px"></div>
+      <div class="flow-row">
+        <div class="flow-box"><span class="blank" data-a="ムンドノーボ">？？？？？？</span></div>
+        <div class="flow-arrow">＋</div>
+        <div class="flow-box"><span class="blank" data-a="カトゥーラ">？？？？</span></div>
+      </div>
+      <div class="flow-arrow-down">↓</div>
+      <div class="flow-row">
+        <div class="flow-box"><span class="blank" data-a="カトゥアイ">？？？？</span></div>
+      </div>
+      <div style="height:8px"></div>
+      <div class="flow-row">
+        <div class="flow-box"><span class="blank" data-a="HdT">？？？</span></div>
+        <div class="flow-arrow">＋</div>
+        <div class="flow-box"><span class="blank" data-a="カトゥーラ">？？？？</span></div>
+      </div>
+      <div class="flow-arrow-down">↓ 耐さび病</div>
+      <div class="flow-row">
+        <div class="flow-box"><span class="blank" data-a="カティモール">？？？？</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">ゲイシャ</div>
+    <div style="font-size:13px;line-height:1.8">
+      起源：<span class="blank" data-a="エチオピア">？？？？</span><br>
+      特徴：<span class="blank" data-a="フザリウム菌に耐性">？？？？？？？？</span>
+    </div>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">栽培条件の比較</div>
+    <table class="tb-table">
+      <tr><th>品種</th><th>最適温度</th><th>年間降雨量</th></tr>
+      <tr><td><span class="blank" data-a="アラビカ">？？？？</span></td><td><span class="blank" data-a="18-22℃">？？？？？</span></td><td><span class="blank" data-a="1400-2000mm">？？？？？？</span></td></tr>
+      <tr><td><span class="blank" data-a="カネフォラ">？？？？</span></td><td><span class="blank" data-a="22-28℃">？？？？？</span></td><td><span class="blank" data-a="2000-2500mm">？？？？？？</span></td></tr>
+    </table>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">標高と温度</div>
+    <div style="font-size:13px;line-height:1.8">
+      標高100m上昇 → <span class="blank" data-a="0.6">？？</span>℃低下
+    </div>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">乾燥耐性</div>
+    <table class="tb-table">
+      <tr><th>品種</th><th>乾期の耐性期間</th></tr>
+      <tr><td><span class="blank" data-a="アラビカ">？？？？</span></td><td><span class="blank" data-a="約6ヶ月">？？？？</span></td></tr>
+      <tr><td><span class="blank" data-a="カネフォラ">？？？？</span></td><td><span class="blank" data-a="約4ヶ月">？？？？</span></td></tr>
+    </table>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">主要病害虫</div>
+    <div style="font-size:13px;line-height:2">
+      <span class="blank" data-a="ベリーボーラー">？？？？？</span>：<span class="blank" data-a="キクイムシ">？？？？</span><br>
+      <span class="blank" data-a="さび病">？？</span>：<span class="blank" data-a="葉裏がオレンジ色">？？？？？？？</span><br>
+      <span class="blank" data-a="CBD">？？？</span>：<span class="blank" data-a="コーヒーベリー病">？？？？？？</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SECTION 4: 精選・選別 ===== -->
+<div class="section" id="sec4">
+  <div class="section-title">⚙️ 精選・選別 <span class="page-ref">教本 第2部</span></div>
+  <div class="section-desc">生豆の精選工程と選別方法。</div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">精選4方式の比較</div>
+    <table class="tb-table">
+      <tr><th>方式</th><th>工程</th><th>代表国</th></tr>
+      <tr>
+        <td><span class="blank" data-a="非水洗式">？？？？</span></td>
+        <td><span class="blank" data-a="チェリーのまま乾燥→脱殻">？？？？？？？？</span></td>
+        <td><span class="blank" data-a="ブラジル,エチオピア">？？？？？？？？</span></td>
+      </tr>
+      <tr>
+        <td><span class="blank" data-a="水洗式">？？？</span></td>
+        <td><span class="blank" data-a="パルピング→発酵→水洗→乾燥→脱殻">？？？？？？？？？？？？？</span></td>
+        <td><span class="blank" data-a="コロンビア,中米">？？？？？？</span></td>
+      </tr>
+      <tr>
+        <td><span class="blank" data-a="パルプドナチュラル">？？？？？？？</span></td>
+        <td><span class="blank" data-a="果肉除去→ミューシレージ付き乾燥">？？？？？？？？？</span></td>
+        <td><span class="blank" data-a="ブラジル">？？？</span></td>
+      </tr>
+      <tr>
+        <td><span class="blank" data-a="スマトラ式">？？？？</span></td>
+        <td><span class="blank" data-a="果肉除去→半乾燥で脱殻→本乾燥">？？？？？？？？？？</span></td>
+        <td><span class="blank" data-a="インドネシア">？？？？</span></td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">乾燥温度管理</div>
+    <div style="font-size:13px;line-height:1.8">
+      チェリー品温上限：<span class="blank" data-a="45">？？</span>℃<br>
+      パーチメント品温上限：<span class="blank" data-a="40">？？</span>℃（熱風<span class="blank" data-a="60">？？</span>℃）<br>
+      目標含水率：<span class="blank" data-a="10-13">？？？？</span>％
+    </div>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">選別方法</div>
+    <div style="font-size:13px;line-height:2">
+      <span class="blank" data-a="スクリーン">？？？？</span>：ピーベリーは細長い穴で分離<br>
+      <span class="blank" data-a="比重選別">？？？</span>：大きい=高品質<br>
+      <span class="blank" data-a="電子選別">？？？？</span>：虫食い・欠け豆は除去困難
+    </div>
+  </div>
+</div>
+
+<!-- ===== SECTION 5: 成分 ===== -->
+<div class="section" id="sec5">
+  <div class="section-title">🧪 成分 <span class="page-ref">教本 p.20-28</span></div>
+  <div class="section-desc">コーヒー豆の主要成分。</div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">アラビカ vs カネフォラ成分比較</div>
+    <table class="tb-table">
+      <tr><th>成分</th><th>アラビカ</th><th>カネフォラ</th></tr>
+      <tr>
+        <td><span class="blank" data-a="カフェイン">？？？？</span></td>
+        <td><span class="blank" data-a="0.6-1.5%">？？？？？</span></td>
+        <td><span class="blank" data-a="2.2-2.8%">？？？？？</span>（約<span class="blank" data-a="2倍">？？</span>）</td>
+      </tr>
+      <tr>
+        <td><span class="blank" data-a="少糖類">？？？</span></td>
+        <td>多い</td>
+        <td><span class="blank" data-a="少ない">？？？</span></td>
+      </tr>
+      <tr>
+        <td><span class="blank" data-a="脂質">？？</span></td>
+        <td><span class="blank" data-a="10-16%">？？？？？</span></td>
+        <td><span class="blank" data-a="8-12%">？？？？</span></td>
+      </tr>
+      <tr>
+        <td><span class="blank" data-a="灰分">？？</span></td>
+        <td><span class="blank" data-a="少ない">？？？</span></td>
+        <td>多い（カリウムが約40%）</td>
+      </tr>
+      <tr>
+        <td><span class="blank" data-a="クロロゲン酸">？？？？</span></td>
+        <td><span class="blank" data-a="多い">？？</span></td>
+        <td><span class="blank" data-a="少ない">？？？</span></td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">含水率と劣化</div>
+    <div style="font-size:13px;line-height:1.8">
+      <span class="blank" data-a="14">？？</span>％以上 → <span class="blank" data-a="カビ増殖">？？？</span>
+    </div>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">カフェインレス製法</div>
+    <div style="font-size:13px;line-height:1.8">
+      日本では有機溶媒<span class="blank" data-a="ジクロロメタン">？？？？？？</span>禁止
+    </div>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">脂肪酸の種類</div>
+    <div style="font-size:13px;line-height:2">
+      <span class="blank" data-a="リノール酸">？？？？？</span><br>
+      <span class="blank" data-a="パルミチン酸">？？？？？</span><br>
+      <span class="blank" data-a="ステアリン酸">？？？？？</span><br>
+      <span class="blank" data-a="オレイン酸">？？？？？</span>
+    </div>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">ジクロロゲン酸</div>
+    <div style="font-size:13px;line-height:1.8">
+      <span class="blank" data-a="未成熟豆に多い">？？？？？？</span> → <span class="blank" data-a="不快な渋味">？？？？？</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SECTION 6: 焙煎 ===== -->
+<div class="section" id="sec6">
+  <div class="section-title">🔥 焙煎 <span class="page-ref">教本 p.50-76</span></div>
+  <div class="section-desc">焙煎機の種類と温度プロファイル。</div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">焙煎機3タイプ</div>
+    <table class="tb-table">
+      <tr><th>機種</th><th>特徴</th></tr>
+      <tr>
+        <td><span class="blank" data-a="直火式">？？？</span></td>
+        <td>シリンダーに<span class="blank" data-a="穴あり">？？</span>、炭火の<span class="blank" data-a="遠赤外線">？？？？</span>利用可</td>
+      </tr>
+      <tr>
+        <td><span class="blank" data-a="半熱風式">？？？？</span></td>
+        <td>シリンダーに<span class="blank" data-a="穴なし">？？</span>、火力変化に<span class="blank" data-a="鈍い">？？</span></td>
+      </tr>
+      <tr>
+        <td><span class="blank" data-a="熱風式">？？？</span></td>
+        <td>熱源が<span class="blank" data-a="離れた位置">？？？？</span>、<span class="blank" data-a="対流">？？</span>の影響大、生産効率<span class="blank" data-a="高い">？？</span></td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">伝熱3種</div>
+    <div style="font-size:13px;line-height:2">
+      <span class="blank" data-a="伝導">？？</span><br>
+      <span class="blank" data-a="対流">？？</span><br>
+      <span class="blank" data-a="輻射">？？</span>（温度の<span class="blank" data-a="4乗">？？</span>の差に比例、<span class="blank" data-a="反射">？？</span>が起こる）
+    </div>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">温度プロファイル</div>
+    <div style="position:relative;width:100%;padding-top:60%;margin:8px 0">
+      <svg viewBox="0 0 300 150" style="position:absolute;top:0;left:0;width:100%;height:100%">
+        <line x1="40" y1="10" x2="40" y2="130" stroke="#999" stroke-width="1"/>
+        <line x1="40" y1="130" x2="285" y2="130" stroke="#999" stroke-width="1"/>
+        <text x="5" y="75" fill="#999" font-size="9" transform="rotate(-90,5,75)">温度</text>
+        <text x="275" y="145" fill="#999" font-size="9">時間→</text>
+        <path d="M45,30 Q80,35 100,45 Q140,55 170,50 Q200,45 230,35 Q260,28 280,20" fill="none" stroke="#c8a96e" stroke-width="2"/>
+        <path d="M45,110 Q70,105 90,90 Q120,65 150,55 Q180,48 210,42 Q250,35 280,28" fill="none" stroke="#4caf50" stroke-width="1.5" stroke-dasharray="6,3"/>
+        <path d="M45,115 Q70,112 90,100 Q120,80 150,65 Q180,55 210,48 Q250,40 280,32" fill="none" stroke="#e0e0e0" stroke-width="1.5" stroke-dasharray="2,3"/>
+        <text x="50" y="25" fill="#999" font-size="8">投入</text>
+        <line x1="45" y1="28" x2="45" y2="115" stroke="#999" stroke-width="0.5" stroke-dasharray="2,2"/>
+      </svg>
+    </div>
+    <div class="temp-legend" style="font-size:10px">
+      <span><span style="width:20px;height:2px;background:var(--accent);display:inline-block"></span>雰囲気</span>
+      <span><span style="width:20px;height:0;border-top:1.5px dashed var(--ok);display:inline-block"></span>豆表面</span>
+      <span><span style="width:20px;height:0;border-top:1.5px dotted var(--text2);display:inline-block"></span>豆内部</span>
+    </div>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">焙煎度のL値</div>
+    <table class="tb-table" style="font-size:10px">
+      <tr><th>焙煎度</th><th>L値範囲</th></tr>
+      <tr><td><span class="blank" data-a="イタリアン">？？？？？</span></td><td><span class="blank" data-a="<15.0">？？？？</span></td></tr>
+      <tr><td><span class="blank" data-a="フレンチ">？？？</span></td><td><span class="blank" data-a="15.0-17.5">？？？？？？</span></td></tr>
+      <tr><td><span class="blank" data-a="フルシティ">？？？？</span></td><td><span class="blank" data-a="17.5-20.0">？？？？？？</span></td></tr>
+      <tr><td><span class="blank" data-a="シティ">？？</span></td><td><span class="blank" data-a="20.0-22.5">？？？？？？</span></td></tr>
+      <tr><td><span class="blank" data-a="ミディアム">？？？？</span></td><td><span class="blank" data-a="22.5-25.0">？？？？？？</span></td></tr>
+      <tr><td><span class="blank" data-a="ハイ">？？</span></td><td><span class="blank" data-a="25.0-27.5">？？？？？？</span></td></tr>
+      <tr><td><span class="blank" data-a="シナモン">？？？？</span></td><td><span class="blank" data-a="27.5-30.0">？？？？？？</span></td></tr>
+      <tr><td><span class="blank" data-a="ライト">？？</span></td><td><span class="blank" data-a=">30.0">？？？？</span></td></tr>
+    </table>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">焙煎による成分変化</div>
+    <div class="cat-box">
+      <div class="cat-title stable">変化しないもの</div>
+      <div class="cat-items"><span class="blank" data-a="カフェイン">？？？？</span>、<span class="blank" data-a="脂質">？？</span>、<span class="blank" data-a="タンパク質">？？？</span>、灰分、<span class="blank" data-a="多糖類">？？？</span></div>
+    </div>
+    <div class="cat-box">
+      <div class="cat-title down">大きく減少するもの</div>
+      <div class="cat-items"><span class="blank" data-a="少糖類">？？？</span>、<span class="blank" data-a="アミノ酸">？？？？</span>、<span class="blank" data-a="クロロゲン酸">？？？？？</span></div>
+    </div>
+    <div class="cat-box">
+      <div class="cat-title up">増えるもの</div>
+      <div class="cat-items"><span class="blank" data-a="褐色色素">？？？？</span></div>
+    </div>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">ハゼ現象</div>
+    <div style="font-size:13px;line-height:1.8">
+      生豆投入後、温度は一旦<span class="blank" data-a="下がり">？？</span>、次第に<span class="blank" data-a="上昇">？？</span>。<br>
+      昇温速度が味に影響。急激 → <span class="blank" data-a="ハゼ">？？</span>が大きい
+    </div>
+  </div>
+</div>
+
+<!-- ===== SECTION 7: 褐色色素 ===== -->
+<div class="section" id="sec7">
+  <div class="section-title">🎨 褐色色素の形成 <span class="page-ref">教本 p.75</span></div>
+  <div class="section-desc">焙煎による色素形成メカニズム。</div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">褐色色素形成フローチャート</div>
+    <div class="flow">
+      <div class="flow-row">
+        <div class="flow-box"><span class="blank" data-a="アミノ酸">？？？？</span></div>
+        <div class="flow-arrow">＋</div>
+        <div class="flow-box"><span class="blank" data-a="ショ糖">？？</span></div>
+      </div>
+      <div class="flow-arrow-down">↓ メイラード反応</div>
+      <div class="flow-row">
+        <div class="flow-box"><span class="blank" data-a="メラノイジン">？？？？？</span></div>
+      </div>
+      <div class="flow-label">（<span class="blank" data-a="還元糖">？？？</span>の反応）</div>
+
+      <div style="height:12px"></div>
+
+      <div class="flow-row">
+        <div class="flow-box"><span class="blank" data-a="ショ糖">？？</span></div>
+        <div class="flow-arrow">→ 熱分解 →</div>
+        <div class="flow-box"><span class="blank" data-a="カラメル">？？？</span></div>
+      </div>
+
+      <div style="height:12px"></div>
+
+      <div class="flow-row">
+        <div class="flow-box"><span class="blank" data-a="クロロゲン酸">？？？？</span></div>
+        <div class="flow-arrow">＋</div>
+        <div class="flow-box"><span class="blank" data-a="ショ糖">？？</span></div>
+      </div>
+      <div class="flow-arrow-down">↓</div>
+      <div class="flow-row">
+        <div class="flow-box"><span class="blank" data-a="褐色色素C">？？？</span></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box"><span class="blank" data-a="褐色色素B">？？？</span></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box"><span class="blank" data-a="褐色色素A">？？？</span></div>
+      </div>
+      <div class="flow-label">＋<span class="blank" data-a="タンパク質">？？？</span>＋<span class="blank" data-a="多糖類">？？</span> で重合</div>
+
+      <div style="height:10px"></div>
+      <div style="font-size:11px;color:var(--text2);text-align:center">焙煎が進む → <span class="blank" data-a="褐色色素A">？？？</span> の割合UP（黒く、苦味が重厚に）</div>
+    </div>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">分子量順序</div>
+    <div style="font-size:12px;text-align:center;line-height:2">
+      <span class="blank" data-a="褐色色素A">？？？</span> ＞
+      <span class="blank" data-a="褐色色素B">？？？</span> ＞
+      <span class="blank" data-a="メラノイジン">？？？？</span> ＞
+      <span class="blank" data-a="カラメル">？？？</span> ＞
+      <span class="blank" data-a="褐色色素C">？？？</span>
+    </div>
+    <div style="font-size:10px;color:var(--text2);text-align:center">（大 → 小）</div>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">苦味の形成</div>
+    <div style="font-size:13px;line-height:1.8">
+      苦味の一部は<span class="blank" data-a="色素">？？</span>によるもの。<br>
+      苦味の質は<span class="blank" data-a="分子量">？？</span>で異なり、増加 → <span class="blank" data-a="重厚">？？</span>になる。<br>
+      <span class="blank" data-a="ジケトピペラジン">？？？？？</span>も苦味に大きく影響
+    </div>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">酸味の形成</div>
+    <div style="font-size:13px;line-height:1.8">
+      総酸量は一度<span class="blank" data-a="増加">？？</span>し、やがて<span class="blank" data-a="減少">？？</span>。<br>
+      初期増加：<span class="blank" data-a="クロロゲン酸">？？？？？</span> → <span class="blank" data-a="キナ酸">？？？</span>・コーヒー酸<br>
+      少糖類 → <span class="blank" data-a="酢酸">？？</span>・ギ酸・乳酸・<span class="blank" data-a="グリコール酸">？？？？？</span><br>
+      後期減少：酸の<span class="blank" data-a="熱分解">？？？</span>
+    </div>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">キナ酸のラクトン化</div>
+    <div style="font-size:13px;line-height:1.8">
+      キナ酸の一部が<span class="blank" data-a="ラクトン">？？？？</span>（分子内結合）を形成。<br>
+      ラクトンは酸味なし → <span class="blank" data-a="抽出液中">？？？？</span>で開環 → 酸味出現<br>
+      これが<span class="blank" data-a="保存時の酸味増加">？？？？？？？</span>の原因
+    </div>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">香気成分</div>
+    <div style="font-size:13px;line-height:1.8">
+      約<span class="blank" data-a="650">？？？</span>種類<br>
+      <span class="blank" data-a="フラン類">？？？</span>：カラメル香（増加後減少）<br>
+      <span class="blank" data-a="ピラジン類">？？？？</span>：ナッツ/グリーン様（変化少ない）
+    </div>
+  </div>
+</div>
+
+<!-- ===== SECTION 8: 抽出・保存 ===== -->
+<div class="section" id="sec8">
+  <div class="section-title">☕ 抽出・保存 <span class="page-ref">教本 p.100-120</span></div>
+  <div class="section-desc">コーヒー抽出と保存条件。</div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">抽出の6要因</div>
+    <div style="font-size:12px;line-height:2">
+      <span class="blank" data-a="粒度">？？</span><br>
+      <span class="blank" data-a="溶解度">？？</span><br>
+      <span class="blank" data-a="湯温">？？</span><br>
+      <span class="blank" data-a="粒度分布">？？？</span><br>
+      <span class="blank" data-a="接触時間">？？？</span><br>
+      <span class="blank" data-a="湯と粉の比率">？？？？？</span>
+    </div>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">抽出3段階</div>
+    <div style="font-size:13px;line-height:2">
+      1. <span class="blank" data-a="粉内部での移動">？？？？？</span><br>
+      2. <span class="blank" data-a="お湯への移行">？？？？</span><br>
+      3. <span class="blank" data-a="ろ過">？？</span>
+    </div>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">抽出順序</div>
+    <div style="font-size:13px;line-height:1.8">
+      <span class="blank" data-a="酸味">？？</span>が先に抽出される（移動速度が<span class="blank" data-a="速い">？？</span>）
+    </div>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">抽出方法の分類</div>
+    <table class="tb-table">
+      <tr><th>分類</th><th>方法例</th></tr>
+      <tr><td><span class="blank" data-a="浸漬法">？？？</span></td><td><span class="blank" data-a="フレンチプレス,サイフォン">？？？？？？？？？</span></td></tr>
+      <tr><td><span class="blank" data-a="透過法">？？？</span></td><td><span class="blank" data-a="ドリップ,エスプレッソ">？？？？？？？？</span></td></tr>
+    </table>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">保存の5大要因</div>
+    <table class="tb-table" style="font-size:10px">
+      <tr><th>要因</th><th>影響</th></tr>
+      <tr>
+        <td><span class="blank" data-a="水分">？？</span></td>
+        <td><span class="blank" data-a="1.5%増→1.6倍劣化">？？？？？？？？</span></td>
+      </tr>
+      <tr>
+        <td><span class="blank" data-a="酸素">？？</span></td>
+        <td><span class="blank" data-a="0→1%で10倍">？？？？？？</span></td>
+      </tr>
+      <tr>
+        <td><span class="blank" data-a="光">？？</span></td>
+        <td><span class="blank" data-a="蛍光灯1ヶ月で暗所の2倍">？？？？？？？？？</span></td>
+      </tr>
+      <tr>
+        <td><span class="blank" data-a="温度">？？</span></td>
+        <td><span class="blank" data-a="10℃上昇で約2倍">？？？？？？</span></td>
+      </tr>
+      <tr>
+        <td><span class="blank" data-a="状態">？？</span></td>
+        <td><span class="blank" data-a="粉は豆より劣化速い">？？？？？？？</span></td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<!-- ===== SECTION 9: 粉砕・包装 ===== -->
+<div class="section" id="sec9">
+  <div class="section-title">📦 粉砕・包装 <span class="page-ref">教本 p.120-140</span></div>
+  <div class="section-desc">コーヒー粉砕と包装方法。</div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">ミルの種類</div>
+    <table class="tb-table">
+      <tr><th>ミル</th><th>特徴</th></tr>
+      <tr>
+        <td><span class="blank" data-a="ロールグラインダー">？？？？？？？</span></td>
+        <td>工業用、<span class="blank" data-a="均一性高">？？？</span></td>
+      </tr>
+      <tr>
+        <td><span class="blank" data-a="コニカルカッター">？？？？？？</span></td>
+        <td><span class="blank" data-a="無段階調整">？？？？</span></td>
+      </tr>
+      <tr>
+        <td><span class="blank" data-a="ブレードグラインダー">？？？？？？？</span></td>
+        <td>均一性<span class="blank" data-a="低">？？</span>、<span class="blank" data-a="微粉多">？？？</span></td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">包装3大ポイント</div>
+    <div style="font-size:13px;line-height:2">
+      ① <span class="blank" data-a="水分・酸素除去">？？？？？？？</span><br>
+      ② <span class="blank" data-a="遮断維持">？？？</span><br>
+      ③ <span class="blank" data-a="CO2による変形防止">？？？？？？？？</span>
+    </div>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">包装方法</div>
+    <table class="tb-table">
+      <tr><th>方法</th><th>説明</th></tr>
+      <tr>
+        <td><span class="blank" data-a="ガスフラッシュ式">？？？？？？</span></td>
+        <td>残存O2 <span class="blank" data-a="1%以下">？？？？</span></td>
+      </tr>
+      <tr>
+        <td><span class="blank" data-a="真空包装">？？？</span></td>
+        <td>-</td>
+      </tr>
+      <tr>
+        <td><span class="blank" data-a="バルブ付包装">？？？？？</span></td>
+        <td><span class="blank" data-a="ワンウェイ">？？？？？</span></td>
+      </tr>
+      <tr>
+        <td><span class="blank" data-a="脱酸素剤封入">？？？？？</span></td>
+        <td>-</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">包材4性質</div>
+    <div style="font-size:13px;line-height:2">
+      <span class="blank" data-a="遮湿性">？？？</span><br>
+      <span class="blank" data-a="遮光性">？？？</span><br>
+      <span class="blank" data-a="ガスバリア性">？？？？？</span><br>
+      <span class="blank" data-a="保香性">？？？</span>
+    </div>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">積層フィルム構成</div>
+    <div style="font-size:13px;line-height:1.8">
+      <span class="blank" data-a="PET">？？？</span>（外側）/ <span class="blank" data-a="VMPET">？？？？</span>（バリア）/ <span class="blank" data-a="PE">？？</span>（ヒートシール）
+    </div>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">脱酸素剤の注意</div>
+    <div style="font-size:13px;line-height:2">
+      開封後<span class="blank" data-a="すぐ使う">？？？</span><br>
+      使用期限<span class="blank" data-a="守る">？？</span><br>
+      電子レンジ<span class="blank" data-a="不可">？？</span><br>
+      穴開き = <span class="blank" data-a="効果なし">？？？</span>
+    </div>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">エージングと脱ガス</div>
+    <div style="font-size:13px;line-height:1.8">
+      焙煎後<span class="blank" data-a="1-3日">？？？</span>のガス抜き期間<br>
+      CO2放出量：豆重量の約<span class="blank" data-a="1%">？％</span>（最大）<br>
+      100gから約<span class="blank" data-a="500cm³">？？？？</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SECTION 10: カップテスト・鑑定 ===== -->
+<div class="section" id="sec10">
+  <div class="section-title">🏆 カップテスト・鑑定 <span class="page-ref">教本 p.140-160</span></div>
+  <div class="section-desc">SCAJ評価基準とカップテスト手順。</div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">カップテスト手順</div>
+    <div style="font-size:13px;line-height:2">
+      豆約<span class="blank" data-a="7g">？？</span><br>
+      熱湯約<span class="blank" data-a="135mL">？？？</span><br>
+      <span class="blank" data-a="1カップずつ別々に粉砕">？？？？？？？？</span>
+    </div>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">SCAJ評価8項目</div>
+    <div style="font-size:12px;line-height:1.9">
+      ① <span class="blank" data-a="クリーンカップ">？？？？？</span><br>
+      ② <span class="blank" data-a="甘さ">？？</span><br>
+      ③ <span class="blank" data-a="酸味と特徴評価">？？？？？？？</span><br>
+      ④ <span class="blank" data-a="口に含んだ質感">？？？？？？？</span>（粘り気・密度・濃さ・重さ・滑らかさ・収斂性）<br>
+      ⑤ <span class="blank" data-a="風味特性・プロフィール">？？？？？？？？？</span>（最重要）<br>
+      ⑥ <span class="blank" data-a="後味の印象度">？？？？？</span><br>
+      ⑦ <span class="blank" data-a="ハーモニー・均衡性">？？？？？？？</span><br>
+      ⑧ <span class="blank" data-a="総合点">？？？</span>
+    </div>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">スコア計算</div>
+    <div style="font-size:13px;line-height:1.8">
+      中心点<span class="blank" data-a="4">？？</span>、0-8点<br>
+      合計 + 定数<span class="blank" data-a="36">？？</span> = <span class="blank" data-a="100点">？？</span>満点
+    </div>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">ブラジル 初級鑑定</div>
+    <table class="tb-table" style="font-size:11px">
+      <tr><th>PRIMARY TASTE</th><th>説明</th></tr>
+      <tr><td><span class="blank" data-a="Strictly Soft">？？？？？？？？</span></td><td>最高品質</td></tr>
+      <tr><td><span class="blank" data-a="Soft">？？？</span></td><td>-</td></tr>
+      <tr><td><span class="blank" data-a="Softish">？？？？？？</span></td><td>-</td></tr>
+      <tr><td><span class="blank" data-a="Hardish">？？？？？？</span></td><td>-</td></tr>
+      <tr><td><span class="blank" data-a="Hard">？？？</span></td><td>-</td></tr>
+      <tr><td><span class="blank" data-a="Very Hard">？？？？？</span></td><td>-</td></tr>
+      <tr><td><span class="blank" data-a="Slightly Rioy">？？？？？？？？</span></td><td>-</td></tr>
+      <tr><td><span class="blank" data-a="Rioy">？？？</span></td><td>欠陥品</td></tr>
+      <tr><td><span class="blank" data-a="Rio">？？？</span></td><td>欠陥品</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ===== SECTION 11: 周辺知識・歴史 ===== -->
+<div class="section" id="sec11">
+  <div class="section-title">📚 周辺知識・歴史 <span class="page-ref">教本 全般</span></div>
+  <div class="section-desc">コーヒー関連の周辺知識と歴史。</div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">フードファディズム</div>
+    <div style="font-size:13px;line-height:1.8">
+      食品への<span class="blank" data-a="過大な健康期待">？？？？？？？</span>or <span class="blank" data-a="一方的危険視">？？？？？</span>
+    </div>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">インスタント製法</div>
+    <table class="tb-table">
+      <tr><th>方法</th><th>特徴</th></tr>
+      <tr>
+        <td><span class="blank" data-a="スプレードライ">？？？？？</span></td>
+        <td>熱風乾燥、粒<span class="blank" data-a="細かい">？？</span></td>
+      </tr>
+      <tr>
+        <td><span class="blank" data-a="フリーズドライ">？？？？？？</span></td>
+        <td>昇華乾燥、風味<span class="blank" data-a="良好">？？</span></td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">リキッドコーヒー分類</div>
+    <table class="tb-table" style="font-size:11px">
+      <tr><th>濃度</th><th>分類</th></tr>
+      <tr>
+        <td><span class="blank" data-a="5%以上">？？？？</span></td>
+        <td><span class="blank" data-a="コーヒー">？？？</span></td>
+      </tr>
+      <tr>
+        <td><span class="blank" data-a="2.5-5%">？？？？？</span></td>
+        <td><span class="blank" data-a="コーヒー飲料">？？？？？</span></td>
+      </tr>
+      <tr>
+        <td><span class="blank" data-a="1-2.5%">？？？？</span></td>
+        <td><span class="blank" data-a="コーヒー入り飲料">？？？？？？？</span></td>
+      </tr>
+      <tr>
+        <td>乳固形分<span class="blank" data-a="3%以上">？？？？</span></td>
+        <td><span class="blank" data-a="乳飲料">？？？</span></td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">缶・PETボトルコーヒー殺菌</div>
+    <table class="tb-table">
+      <tr><th>容器</th><th>殺菌法</th></tr>
+      <tr>
+        <td><span class="blank" data-a="缶">？？</span></td>
+        <td><span class="blank" data-a="レトルト殺菌">？？？？？？</span>（<span class="blank" data-a="121℃,4分">？？？？？？</span>）</td>
+      </tr>
+      <tr>
+        <td><span class="blank" data-a="PETボトル">？？？？？</span></td>
+        <td><span class="blank" data-a="UHT殺菌">？？？？</span>（<span class="blank" data-a="130-140℃,数秒">？？？？？？？？</span>）</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="tb-card">
+    <div class="tb-card-title">コーヒーの世界史年表</div>
+    <table class="tb-table" style="font-size:11px">
+      <tr><th>年</th><th>出来事</th></tr>
+      <tr>
+        <td><span class="blank" data-a="850-922">？？？？</span></td>
+        <td><span class="blank" data-a="ラーゼス">？？？？</span>医学書初記述</td>
+      </tr>
+      <tr>
+        <td><span class="blank" data-a="14世紀">？？？</span></td>
+        <td><span class="blank" data-a="イエメン">？？？</span>で飲用開始</td>
+      </tr>
+      <tr>
+        <td><span class="blank" data-a="1554">？？？？</span></td>
+        <td><span class="blank" data-a="イスタンブール">？？？？？</span>世界初コーヒーハウス</td>
+      </tr>
+      <tr>
+        <td><span class="blank" data-a="1652">？？？？</span></td>
+        <td><span class="blank" data-a="ロンドン">？？？</span>で流行</td>
+      </tr>
+      <tr>
+        <td><span class="blank" data-a="1804">？？？？</span></td>
+        <td><span class="blank" data-a="太田蜀山人">？？？？？</span>日本初体験記</td>
+      </tr>
+      <tr>
+        <td><span class="blank" data-a="1888">？？？？</span></td>
+        <td><span class="blank" data-a="可否茶館">？？？</span>日本初カフェ</td>
+      </tr>
+      <tr>
+        <td><span class="blank" data-a="1960">？？？？</span></td>
+        <td><span class="blank" data-a="生豆輸入自由化">？？？？？？</span></td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+</div>
+
+<div class="bottom-fixed">
+  <button class="ctrl-btn secondary" onclick="hideAllBlanks()">全部隠す</button>
+  <button class="ctrl-btn primary" onclick="revealAllBlanks()">全部見る</button>
+  <button class="ctrl-btn secondary" onclick="shuffleBlanks()">シャッフル</button>
+</div>
+
+<script>
+const sections = document.querySelectorAll('.section');
+const tabs = document.querySelectorAll('.tab');
+let currentTab = 0;
+
+function switchTab(tabIndex) {
+  sections.forEach((s, i) => s.classList.toggle('active', i === tabIndex));
+  tabs.forEach((t, i) => t.classList.toggle('active', i === tabIndex));
+  currentTab = tabIndex;
+  updateScore();
+}
+
+function updateScore() {
+  const activeSection = sections[currentTab];
+  const blanks = activeSection.querySelectorAll('.blank');
+  const revealed = activeSection.querySelectorAll('.blank.revealed').length;
+  document.getElementById('scoreBadge').textContent = `${revealed} / ${blanks.length}`;
+}
+
+document.querySelectorAll('.blank').forEach(blank => {
+  blank.dataset.placeholder = blank.textContent;
+  blank.addEventListener('click', function(e) {
+    e.stopPropagation();
+    if (this.classList.contains('revealed')) {
+      this.classList.remove('revealed');
+      this.textContent = this.dataset.placeholder;
+    } else {
+      this.classList.add('revealed');
+      this.textContent = this.dataset.a;
+    }
+    updateScore();
+  });
+});
+
+function hideAllBlanks() {
+  const activeSection = sections[currentTab];
+  activeSection.querySelectorAll('.blank').forEach(b => {
+    b.classList.remove('revealed');
+    b.textContent = b.dataset.placeholder;
+  });
+  updateScore();
+}
+
+function revealAllBlanks() {
+  const activeSection = sections[currentTab];
+  activeSection.querySelectorAll('.blank').forEach(b => {
+    b.classList.add('revealed');
+    b.textContent = b.dataset.a;
+  });
+  updateScore();
+}
+
+function shuffleBlanks() {
+  hideAllBlanks();
+  const activeSection = sections[currentTab];
+  const blanks = Array.from(activeSection.querySelectorAll('.blank'));
+  for (let i = blanks.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [blanks[i], blanks[j]] = [blanks[j], blanks[i]];
+  }
+  if (blanks.length > 0) {
+    blanks[0].style.outline = '2px solid var(--accent)';
+    blanks[0].scrollIntoView({block:'center', behavior:'instant'});
+  }
+}
+
+// Initialize
+updateScore();
+</script>
+</body>
+</html>
