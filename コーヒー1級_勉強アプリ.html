@@ -1,0 +1,3622 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>コーヒー1級 チューター</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#1a1a2e;--card:#16213e;--accent:#c8a96e;--accent2:#e8d5a8;
+  --text:#e0e0e0;--text2:#999;--correct:#4caf50;--wrong:#e74c3c;
+  --chat-user:#2a3a5e;--chat-bot:#1e2d4a;
+}
+html,body{height:100%;font-family:'Helvetica Neue','Hiragino Sans',sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
+#app{display:flex;flex-direction:column;height:100%;max-width:600px;margin:0 auto;position:relative}
+
+/* Header */
+.header{
+  background:linear-gradient(135deg,#16213e,#0f3460);
+  padding:12px 16px;display:flex;align-items:center;gap:12px;
+  border-bottom:1px solid rgba(200,169,110,0.3);flex-shrink:0;
+}
+.home-link{text-decoration:none;font-size:18px;flex-shrink:0;padding:4px;opacity:0.7;transition:opacity 0.15s}
+.home-link:active{opacity:1}
+.header-avatar{width:40px;height:40px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.header-info{flex:1;min-width:0}
+.header-name{font-size:15px;font-weight:700;color:var(--accent2)}
+.header-status{font-size:11px;color:var(--correct);display:flex;align-items:center;gap:4px}
+.header-status::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--correct);display:inline-block}
+.header-stats{display:flex;gap:8px;font-size:11px;color:var(--accent)}
+.stat-badge{background:rgba(200,169,110,0.15);padding:3px 8px;border-radius:10px;white-space:nowrap}
+
+/* Chat area */
+.chat-area{flex:1;overflow-y:auto;padding:12px 12px 8px;display:flex;flex-direction:column;gap:8px}
+.chat-area::-webkit-scrollbar{width:4px}
+.chat-area::-webkit-scrollbar-thumb{background:rgba(200,169,110,0.3);border-radius:2px}
+
+.msg{max-width:88%;padding:10px 14px;border-radius:16px;font-size:14px;line-height:1.65;word-break:break-word}
+.msg-bot{background:var(--chat-bot);align-self:flex-start;border-bottom-left-radius:4px}
+.msg-user{background:var(--chat-user);align-self:flex-end;border-bottom-right-radius:4px;color:var(--accent2)}
+.msg-system{align-self:center;background:rgba(200,169,110,0.12);color:var(--accent);font-size:12px;padding:6px 14px;border-radius:20px;text-align:center}
+
+.msg b,.msg strong{color:var(--accent2)}
+.msg .keyword{color:var(--accent);font-weight:700}
+.msg .hint{color:var(--text2);font-size:12px;font-style:italic}
+.msg .correct-mark{color:var(--correct);font-weight:700}
+.msg .wrong-mark{color:var(--wrong);font-weight:700}
+.msg .explain-box{background:rgba(200,169,110,0.08);border-left:3px solid var(--accent);padding:8px 10px;margin-top:8px;border-radius:0 8px 8px 0;font-size:13px}
+
+/* Typing indicator */
+.typing{display:flex;gap:4px;padding:12px 16px;align-self:flex-start}
+.typing span{width:7px;height:7px;background:var(--text2);border-radius:50%;animation:bounce 1.4s infinite}
+.typing span:nth-child(2){animation-delay:0.2s}
+.typing span:nth-child(3){animation-delay:0.4s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-8px)}}
+
+/* Quiz options */
+.quiz-options{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.quiz-btn{
+  background:rgba(200,169,110,0.1);border:1px solid rgba(200,169,110,0.3);
+  color:var(--text);padding:10px 14px;border-radius:12px;font-size:14px;
+  cursor:pointer;text-align:left;transition:all 0.2s;display:flex;align-items:center;gap:8px;
+}
+.quiz-btn:hover{background:rgba(200,169,110,0.2);border-color:var(--accent)}
+.quiz-btn:active{transform:scale(0.98)}
+.quiz-btn.correct{background:rgba(76,175,80,0.2);border-color:var(--correct);color:var(--correct)}
+.quiz-btn.wrong{background:rgba(231,76,60,0.15);border-color:var(--wrong);color:var(--wrong)}
+.quiz-btn.reveal{border-color:var(--correct);color:var(--correct)}
+.quiz-btn:disabled{cursor:default;opacity:0.85}
+.opt-label{font-weight:700;color:var(--accent);min-width:22px}
+
+/* Bottom bar */
+.bottom-bar{
+  flex-shrink:0;padding:8px 12px 12px;
+  background:linear-gradient(0deg,var(--bg) 80%,transparent);
+  display:flex;flex-direction:column;gap:6px;
+}
+.action-row{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.action-btn{
+  background:linear-gradient(135deg,rgba(200,169,110,0.2),rgba(200,169,110,0.1));
+  border:1px solid rgba(200,169,110,0.4);color:var(--accent2);
+  padding:10px 16px;border-radius:20px;font-size:13px;font-weight:600;
+  cursor:pointer;transition:all 0.2s;white-space:nowrap;
+}
+.action-btn:hover{background:rgba(200,169,110,0.3);transform:translateY(-1px)}
+.action-btn:active{transform:scale(0.97)}
+.action-btn.primary{background:linear-gradient(135deg,var(--accent),#b8944e);color:#1a1a2e;border:none}
+
+/* Progress bar */
+.progress-wrap{padding:0 4px}
+.progress-outer{background:rgba(255,255,255,0.08);border-radius:6px;height:6px;overflow:hidden}
+.progress-inner{height:100%;background:linear-gradient(90deg,var(--accent),#e8d5a8);border-radius:6px;transition:width 0.5s ease}
+.progress-label{font-size:10px;color:var(--text2);text-align:center;margin-top:2px}
+
+/* Menu overlay */
+.menu-overlay{
+  position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);
+  display:none;z-index:100;justify-content:center;align-items:center;
+}
+.menu-overlay.show{display:flex}
+.menu-card{
+  background:var(--card);border-radius:20px;padding:24px;max-width:500px;width:90%;
+  max-height:80vh;overflow-y:auto;border:1px solid rgba(200,169,110,0.2);
+}
+.menu-card h2{color:var(--accent2);font-size:18px;margin-bottom:16px;text-align:center}
+.menu-item{
+  padding:12px 14px;border-radius:12px;margin-bottom:6px;cursor:pointer;
+  display:flex;justify-content:space-between;align-items:center;
+  background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);
+  transition:all 0.2s;
+}
+.menu-item:hover{background:rgba(200,169,110,0.1);border-color:rgba(200,169,110,0.3)}
+.menu-item .ch-name{font-size:14px;font-weight:600}
+.menu-item .ch-sub{font-size:11px;color:var(--text2);margin-top:2px}
+.menu-item .ch-badge{font-size:11px;padding:3px 8px;border-radius:8px;white-space:nowrap}
+.ch-badge.done{background:rgba(76,175,80,0.2);color:var(--correct)}
+.ch-badge.progress{background:rgba(200,169,110,0.2);color:var(--accent)}
+.ch-badge.new{background:rgba(255,255,255,0.08);color:var(--text2)}
+.menu-close{
+  display:block;margin:12px auto 0;background:none;border:1px solid rgba(200,169,110,0.3);
+  color:var(--accent);padding:8px 24px;border-radius:16px;cursor:pointer;font-size:13px;
+}
+
+/* Welcome screen */
+.welcome{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:24px;text-align:center;gap:16px;
+}
+.welcome-icon{font-size:64px}
+.welcome h1{font-size:22px;color:var(--accent2);font-weight:800}
+.welcome p{font-size:14px;color:var(--text2);line-height:1.7;max-width:320px}
+.welcome .start-btn{
+  background:linear-gradient(135deg,var(--accent),#b8944e);color:#1a1a2e;
+  border:none;padding:14px 40px;border-radius:24px;font-size:16px;font-weight:700;
+  cursor:pointer;margin-top:8px;transition:transform 0.2s;
+}
+.welcome .start-btn:hover{transform:scale(1.03)}
+
+/* Today's norma card */
+.today-card{
+  background:linear-gradient(135deg,#16213e,#0f3460);width:100%;max-width:360px;
+  border-radius:16px;padding:16px 18px;border:1px solid rgba(200,169,110,0.3);text-align:left;
+}
+.today-date{font-size:12px;color:var(--accent);font-weight:700;margin-bottom:6px}
+.today-title{font-size:16px;color:var(--accent2);font-weight:800;margin-bottom:8px}
+.today-tasks{list-style:none;padding:0}
+.today-tasks li{font-size:13px;color:var(--text);padding:5px 0;display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(255,255,255,0.04)}
+.today-tasks li:last-child{border-bottom:none}
+.today-tasks .task-icon{font-size:14px;flex-shrink:0}
+.today-tasks .task-done{text-decoration:line-through;color:var(--text2)}
+.today-overall{margin-top:10px;font-size:11px;color:var(--text2);text-align:center}
+.today-overall b{color:var(--accent)}
+
+/* Schedule overlay additions */
+.sched-tabs{display:flex;gap:4px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px}
+.sched-tab{
+  background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);
+  color:var(--text2);padding:6px 12px;border-radius:12px;font-size:11px;cursor:pointer;white-space:nowrap;
+  transition:all 0.2s;flex-shrink:0;
+}
+.sched-tab.active{background:rgba(200,169,110,0.2);border-color:var(--accent);color:var(--accent2)}
+.sched-tab.current{box-shadow:0 0 0 2px var(--accent)}
+.sched-day{
+  padding:8px 12px;border-radius:10px;margin-bottom:4px;
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:13px;background:rgba(255,255,255,0.02);
+}
+.sched-day.today{background:rgba(200,169,110,0.15);border:1px solid rgba(200,169,110,0.4)}
+.sched-day.past-done{opacity:0.5}
+.sched-day .day-date{color:var(--accent);font-weight:700;min-width:50px}
+.sched-day .day-task{flex:1;margin-left:8px}
+.sched-day .day-status{font-size:11px;flex-shrink:0;margin-left:4px}
+.welcome-btns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:4px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="menu-overlay" id="menuOverlay">
+  <div class="menu-card" id="menuCard"></div>
+</div>
+
+<script>
+// ============================================================
+// COFFEE INSTRUCTOR LEVEL 1 - INTERACTIVE TUTOR APP
+// ============================================================
+
+// --- DATA: All chapters, lessons, quizzes ---
+const CHAPTERS = [
+  {
+    id:'basics_origin',
+    title:'コーヒー生産国の基礎',
+    icon:'🌍',
+    part:'第1部 2級基礎',
+    lessons:[
+      {
+        teach:[
+          'コーヒーはアカネ科のコフィア属に属する熱帯植物です。',
+          '商業上重要なのは<b>アラビカ種</b>（全生産量の約60%）と<b>カネフォラ種</b>（約40%）の2つ。',
+          'コーヒーは南北約25度の「<span class="keyword">コーヒーベルト</span>」と呼ばれる地帯で栽培されています。',
+          'ICO登録の輸出国は約45カ国、非加盟も含めると約60カ国で生産されています。'
+        ],
+        quiz:{
+          q:'コーヒーの全生産量のうち、アラビカ種が占める割合は約何%？',
+          opts:['約40%','約50%','約60%','約80%'],
+          ans:2,
+          explain:'アラビカ種は全生産量の約60%、カネフォラ種が約40%を占めます。'
+        }
+      },
+      {
+        teach:[
+          '<b>カネフォラ種の生産量ランキング（千袋単位、60kg/袋）</b>',
+          '1位 <b>ベトナム</b>: 27,275千袋 - カネフォラ生産の世界最大。年々増加傾向',
+          '2位 <b>ブラジル</b>: 次点。カネフォラも栽培',
+          '3位 <b>インドネシア</b>: 10,000千袋 - スマトラ式処理で有名',
+          '4位 <b>インド</b>: 5,170千袋',
+          'カネフォラ種全体: 約61,631千袋'
+        ],
+        quiz:{
+          q:'カネフォラ種の世界最大生産国はどこ？',
+          opts:['ブラジル','ベトナム','インドネシア','インド'],
+          ans:1,
+          explain:'ベトナムがカネフォラ種の最大生産国で27,275千袋。インドネシア（10,000千袋）の2.7倍以上です。'
+        }
+      },
+      {
+        teach:[
+          '<b>アラビカ種の生産量ランキング（千袋単位）</b>',
+          '1位 <b>ブラジル</b>: 55,950千袋 - 世界最大のアラビカ生産国',
+          '2位 <b>コロンビア</b>: 13,300千袋 - 水洗式アラビカの代表',
+          '3位 <b>エチオピア</b>: 6,500千袋 - アラビカの原産地',
+          '4位 <b>ホンジュラス</b>: 6,100千袋',
+          'アラビカ種全体: 約94,066千袋'
+        ],
+        quiz:{
+          q:'世界全体のコーヒー生産量は約何千袋？',
+          opts:['約100千袋','約155,697千袋','約200千袋','約300千袋'],
+          ans:1,
+          explain:'アラビカ94,066千袋+カネフォラ61,631千袋≒155,697千袋が世界合計です。'
+        }
+      },
+      {
+        teach:[
+          '<b>日本へのコーヒー輸入国トップ10</b>（千袋単位）',
+          '1位 <b>ブラジル</b>: 2,335千袋 - 最大供給国',
+          '2位 <b>ベトナム</b>: 1,354千袋 - 増加傾向著しい',
+          '3位 <b>コロンビア</b>: 1,315千袋',
+          '4位 <b>グアテマラ</b>: 532千袋',
+          '5位 <b>インドネシア</b>: 689千袋',
+          '6位 <b>エチオピア</b>: 319千袋',
+          '7位 <b>タンザニア</b>: 185千袋',
+          '8位 <b>ホンジュラス</b>: 100千袋',
+          '9位 <b>ジャマイカ</b>: 6千袋 - ブルーマウンテン'
+        ],
+        quiz:{
+          q:'日本への最大コーヒー供給国は？',
+          opts:['ベトナム','コロンビア','ブラジル','インドネシア'],
+          ans:2,
+          explain:'ブラジルが2,335千袋で日本の最大供給国。2位のベトナム（1,354千袋）の1.7倍以上です。'
+        }
+      },
+      {
+        teach:[
+          '<b>主要生産国の収穫期</b>',
+          '<b>コロンビア</b>: 年2回 - メインクロップ（10月～2月）、マイナークロップ',
+          '<b>インドネシア</b>: 年2回 - 赤道に近く雨季と乾季の区別が曖昧',
+          '<b>ブラジル</b>: 5月～9月頃 - 南半球なので冬季が収穫',
+          '<b>エチオピア</b>: 9月～12月 - アフリカ東部の季節',
+          '赤道に近い産地は収穫期が分散し、複数回の収穫が可能になります。'
+        ],
+        quiz:{
+          q:'ブラジルの主な収穫期はいつ？',
+          opts:['1月～3月','5月～9月','10月～2月','11月～1月'],
+          ans:1,
+          explain:'ブラジルは南半球なので、5月～9月頃が冬の乾季で収穫時期になります。'
+        }
+      },
+      {
+        teach:[
+          '<b>コーヒーチェリーの構造と精選方法</b>',
+          'チェリーの層（外側から）: <b>外果皮</b> → <b>果肉</b> → <b>パーチメント</b> → <b>ミューシレージ（粘液質）</b> → <b>種子（生豆）</b>',
+          '<b>フラットビーン</b>: 通常、果実内に2つの平豆が入る（90～95%）',
+          '<b>ピーベリー（丸豆）</b>: 5～20%の頻度で発生。1つの実の中に1粒のみ。選別で分離可能',
+          '非水洗式（ドライ）: チェリーのまま乾燥 → 発酵が強い',
+          '水洗式（ウェット）: パーチメント状で乾燥 → すっきりした風味'
+        ],
+        quiz:{
+          q:'コーヒー豆の「ピーベリー」とは？',
+          opts:['異常に大きな豆','1つの実に1粒入った丸い豆','病気の豆','焙煎が失敗した豆'],
+          ans:1,
+          explain:'ピーベリーは全体の5～20%発生し、1つの実に1粒のみ入った丸い豆です。フラットビーンより珍しく、愛好家も多いです。'
+        }
+      },
+      {
+        teach:[
+          '<b>処理方法による分類と特徴</b>',
+          '① <b>非水洗式（ナチュラル）</b>: ブラジル、エチオピア、インドネシア（カネフォラ）、ベトナム',
+          '　　特徴→ 果実のまま乾燥、発酵香が強い、甘い、コスト安い',
+          '② <b>水洗式（ウォッシュド）</b>: ブラジル以外の中南米、カリブ海諸国、タンザニア',
+          '　　特徴→ パーチメント状で乾燥、クリーンな風味、酸味が活きる',
+          '③ <b>パルプドナチュラル（ハニー）</b>: ブラジルで発展',
+          '　　特徴→ ミューシレージ付きパーチメント、中間的な風味',
+          '④ <b>スマトラ式</b>: インドネシア・スマトラ島、スラウェシ島',
+          '　　特徴→ 独特の深緑色、柔らかい状態で脱殻、菌混入リスク高い'
+        ],
+        quiz:{
+          q:'スマトラ式処理の特徴として最も適切なのは？',
+          opts:['完全に乾燥させてから脱殻','湿った状態で脱殻し、独特の風味を形成','果実のまま乾燥させる','パーチメント状で長期保管'],
+          ans:1,
+          explain:'スマトラ式は独特の深緑色と風味を持ち、柔らかい状態で脱殻するため傷つきやすく、菌の侵入リスクが高いです。'
+        }
+      }
+    ]
+  },
+  {
+    id:'grading',
+    title:'格付け（グレード）',
+    icon:'📊',
+    part:'第1部 2級基礎',
+    lessons:[
+      {
+        teach:[
+          'コーヒーの格付け方法は国によって異なり、統一された国際基準はありません。',
+          '大きく<b>4つの分類</b>があります：',
+          '① <b>標高</b>による：中米各国、メキシコ',
+          '② <b>スクリーンサイズ</b>による：コロンビア、ケニア、タンザニア',
+          '③ <b>欠点数（タイプ）</b>による：ペルー、エチオピア',
+          '④ <b>スクリーンと欠点数</b>による：ブラジル、カリブ海諸国'
+        ],
+        quiz:{
+          q:'コロンビアのコーヒー格付けの基準は？',
+          opts:['標高','スクリーンサイズ','欠点数','焙煎度'],
+          ans:1,
+          explain:'コロンビアはスクリーンサイズによる格付け。S-17以上がエクセルソ・スプレモです。'
+        }
+      },
+      {
+        teach:[
+          '<b>エチオピアの格付け（欠点数による）</b>',
+          'Grade 1: 欠点数 ～3個',
+          'Grade 2: 欠点数 4～12個',
+          'Grade 3: 欠点数 13～27個',
+          'Grade 4: 欠点数 28～45個',
+          'Grade 5: 欠点数 46～90個',
+          'アラビカの原産地で風味が重視されるため、欠点数による簡潔な格付けです。'
+        ],
+        quiz:{
+          q:'エチオピアのGrade 2の欠点数範囲は？',
+          opts:['～3個','4～12個','13～27個','28～45個'],
+          ans:1,
+          explain:'エチオピアのGrade 2は欠点数4～12個です。数が少ないほど高品質。'
+        }
+      },
+      {
+        teach:[
+          '<b>ペルーの格付け（欠点数による）</b>',
+          'Grade 1: 欠点数 ～15個',
+          'Grade 2: 欠点数 ～23個',
+          'Grade 3: 欠点数 ～30個',
+          'Grade 4: 欠点数 ～35個',
+          'Grade 5: 欠点数 ～40個',
+          'エチオピアより許容範囲が広く、多めの欠点数で設定されています。'
+        ],
+        quiz:{
+          q:'ペルーのコーヒー格付けで最高等級のGrade 1の欠点数は？',
+          opts:['～3個','～12個','～15個','～23個'],
+          ans:2,
+          explain:'ペルーGrade 1は欠点数～15個。エチオピアより許容範囲が広いです。'
+        }
+      },
+      {
+        teach:[
+          '<b>ブラジルの格付け（スクリーン×欠点数）</b>',
+          'タイプ2（No.2）: 欠点数4以内、スクリーンS-17/18',
+          'タイプ4/5（No.4/5）: 欠点数36以内、スクリーンS-14/15/16',
+          '※ ブラジルにはNo.1は存在しません。No.2が最高等級。',
+          'スクリーンは1/64インチを基準にしたふるいのサイズ。',
+          'S-17 = スクリーン17/64インチ以上の豆を意味します。'
+        ],
+        quiz:{
+          q:'ブラジルのコーヒー格付けで最高等級は？',
+          opts:['No.1','No.2','No.3','Grade A'],
+          ans:1,
+          explain:'ブラジルにはNo.1は存在せず、No.2（タイプ2、欠点数4以内）が最高等級です。'
+        }
+      },
+      {
+        teach:[
+          '<b>インドネシアの格付け（複雑な方式）</b>',
+          '<b>非水洗式（ドライプロセス）</b>:',
+          '  ラージ（7.5×7.5mm～）Grade 1: 欠点数～11個',
+          '  スモール（3×3mm～）Grade 2: 欠点数～25個',
+          '<b>水洗式（ウォッシュド）</b>:',
+          '  Grade 3: 欠点数～44個',
+          '  ミディアム（7.5×7.5mm～）Grade 4: 欠点数～80個',
+          '  スモール（6.5/5.5mm～）Grade 5: 欠点数～150個'
+        ],
+        quiz:{
+          q:'インドネシアの非水洗式で最高等級は？',
+          opts:['Grade 1（ラージ）','Grade 2（スモール）','Grade 3','Grade 4'],
+          ans:0,
+          explain:'インドネシア非水洗式の最高等級はGrade 1（ラージ、7.5mm以上、欠点数～11）です。'
+        }
+      },
+      {
+        teach:[
+          '<b>ベトナム（カネフォラ）の格付け</b>',
+          'S-16以上 → 欠点数～60個 → <b>Grade 1</b>',
+          'S-12.5以上 → 欠点数～90個 → <b>Grade 2</b>',
+          'カネフォラ種は欠点数が多めに設定されています。',
+          '<b>スクリーンサイズの世界基準</b>: 1/64インチを基準',
+          'S-18, S-17, S-16, S-15等で表記。大きいほど大粒で高品質。'
+        ],
+        quiz:{
+          q:'ベトナムのカネフォラ Grade 1の条件は？',
+          opts:['S-16以上＆欠点数～60','S-12.5以上＆欠点数～90','S-18以上＆欠点数～30','S-14以上＆欠点数～50'],
+          ans:0,
+          explain:'ベトナムGrade 1はS-16以上で欠点数～60個。カネフォラは欠点許容度が高いです。'
+        }
+      },
+      {
+        teach:[
+          '<b>標高による格付け（中米各国）</b>',
+          '<b>グアテマラ</b>: SHB（1300m～） > HB（1200～1300m） > EPW（900～1050m）',
+          '<b>エルサルバドル</b>: SHG（1200m～） > HG（900～1200m）',
+          '<b>ホンジュラス</b>: SHG（1200m～） > HG（900～1200m）',
+          '<b>コスタリカ（中央高地）</b>: SHB（1200～1700m） > HB（800～1200m）',
+          '<b>メキシコ</b>: HG/Altura（900～1200m） > PW/Prima Lavado（600～900m）',
+          '標高が高い＝昼夜温度差大→糖分増加→複雑な風味'
+        ],
+        quiz:{
+          q:'グアテマラの最高等級「SHB」は何の略？',
+          opts:['Special High Blend','Strictly Hard Bean','Super Highland Brand','Standard High Brew'],
+          ans:1,
+          explain:'SHB = Strictly Hard Bean。標高1300m以上で栽培された硬い豆を指します。'
+        }
+      },
+      {
+        teach:[
+          '<b>カリブ海諸国とアフリカの格付け</b>',
+          '<b>キューバ（クリスタルマウンテン）</b>:',
+          '  S-18 欠点数～12 → ETL（Extra Turquino Lavado）',
+          '  S-17 欠点数～19 → TL（Turquino Lavado）',
+          '  S-16 欠点数～22 → AL（Altura）',
+          '<b>ハワイ・コナ</b>:',
+          '  S-19 欠点数8 → エクストラファンシー',
+          '  S-18 欠点数12 → ファンシー',
+          '  S-16 欠点数18 → No.1',
+          'いずれもスクリーンと欠点数の組み合わせ。'
+        ],
+        quiz:{
+          q:'ハワイ・コナの最高等級は？',
+          opts:['ファンシー','エクストラファンシー','No.1','Grade A'],
+          ans:1,
+          explain:'ハワイ・コナのエクストラファンシーはS-19で欠点数8個以内。最も厳しい基準です。'
+        }
+      },
+      {
+        teach:[
+          '<b>ジャマイカ・ブルーマウンテンの格付け</b>',
+          'No.1: S-17/18 欠点数～3個以内',
+          'No.2: S-16/17 欠点数～5%',
+          'No.3: S-15/16 欠点数～7%',
+          'セレクト: S-16/17 欠点数～5%',
+          'ブルーマウンテンは全体に高品質で、No.1でも欠点許容度が極めて厳しい（3個以内）。'
+        ],
+        quiz:{
+          q:'ジャマイカ・ブルーマウンテンのNo.1の欠点数は？',
+          opts:['～5個','～3個以内','～7%','～10個'],
+          ans:1,
+          explain:'ブルーマウンテンNo.1は欠点数～3個以内で、非常に厳格な基準です。'
+        }
+      },
+      {
+        teach:[
+          '<b>コロンビアの格付け詳細</b>',
+          'エクセルソ・スプレモ: S-17～ (6.75mm以上)',
+          'エクセルソ・UGQ: S-14～ (5.56mm以上)',
+          'スプレモはコロンビアで最高等級。',
+          '<b>タンザニア（アラビカ）の格付け</b>:',
+          'AA: S-18～ (最高級)',
+          'AB: S-15～17 (高級)',
+          '<b>ケニアの格付け</b>:',
+          'AA: S-18～ (最高級)',
+          'AB: S-15～17 (高級)',
+          '東アフリカ産は粒度による格付けが標準。'
+        ],
+        quiz:{
+          q:'コロンビアの最高等級「エクセルソ・スプレモ」のスクリーン基準は？',
+          opts:['S-14以上','S-15以上','S-17以上','S-18以上'],
+          ans:2,
+          explain:'エクセルソ・スプレモはS-17以上（6.75mm以上）で、コロンビアで最高等級です。'
+        }
+      }
+    ]
+  },
+  {
+    id:'specialty',
+    title:'特定銘柄・認証・スペシャルティ',
+    icon:'🏷️',
+    part:'第1部 2級基礎',
+    lessons:[
+      {
+        teach:[
+          '<span class="keyword">特定銘柄</span>とは、名称を付けるために必要な定義が設けられた商品です。',
+          '<b>ジャマイカ産の特定銘柄</b>:',
+          '・ブルーマウンテン：ブルーマウンテン地区で生産されたアラビカ種',
+          '・ハイマウンテン：ハイマウンテン地区で生産されたアラビカ種',
+          '・ジャマイカ：ジャマイカで生産された上記以外のアラビカ種'
+        ],
+        quiz:{
+          q:'ブルーマウンテンの定義として正しいのは？',
+          opts:['ジャマイカで生産されたアラビカ種全般','ブルーマウンテン地区で生産されたアラビカ種','ジャマイカの山岳地帯産コーヒー','標高1200m以上のジャマイカ産'],
+          ans:1,
+          explain:'ブルーマウンテンはジャマイカのブルーマウンテン地区に限定される特定銘柄です。'
+        }
+      },
+      {
+        teach:[
+          '<b>キューバの特定銘柄</b>:',
+          '・クリスタルマウンテン：キューバで生産され、同国輸出規格に基づくアラビカ種',
+          '<b>中南米の主要特定銘柄</b>:',
+          '・グアテマラアンティグア：グアテマラ・アンティグア地区のアラビカ種',
+          '・コロンビアスプレモ：コロンビアで同国輸出規格に基づくスプレモ',
+          '・メキシコ産：HG/Altura等の標高基準で分類される'
+        ],
+        quiz:{
+          q:'グアテマラアンティグアの定義として正しいのは？',
+          opts:['グアテマラで生産された全アラビカ種','グアテマラ・アンティグア地区のアラビカ種','標高1300m以上のグアテマラ産','グアテマラで最高等級の豆'],
+          ans:1,
+          explain:'グアテマラアンティグアはアンティグア地区に限定される特定銘柄です。'
+        }
+      },
+      {
+        teach:[
+          '<b>アフリカの主要特定銘柄</b>:',
+          '・モカハラー：エチオピア・ハラー地区のアラビカ種',
+          '・モカマタリ：イエメンで生産されたアラビカ種',
+          '・キリマンジャロ：タンザニア産のアラビカ種（<span class="keyword">ブコバ地区を含まない</span>）',
+          'これらは地域限定の特定銘柄で、アフリカ産アラビカの代表的なものです。'
+        ],
+        quiz:{
+          q:'キリマンジャロの定義として正しいのは？',
+          opts:[
+            'ケニア産のアラビカ種コーヒー豆',
+            'タンザニア産のアラビカ種コーヒー豆（ブコバ地区を含まない）',
+            'エチオピア産のアラビカ種コーヒー豆',
+            'タンザニアの全地域で生産されたコーヒー豆'
+          ],
+          ans:1,
+          explain:'キリマンジャロはタンザニア産アラビカですが、ブコバ地区を含みません。'
+        }
+      },
+      {
+        teach:[
+          '<b>インドネシアの特定銘柄</b>:',
+          '・トラジャ：スラウェシ島・トラジャ地区のアラビカ種',
+          '・カロシ：スラウェシ島・カロシ地区のアラビカ種',
+          '・ガヨマウンテン：スマトラ島・タケンゴン地区のアラビカ種',
+          '・マンデリン：北スマトラ州＆アチェ州で生産（<b>ガヨマウンテン生産地区を除く</b>）のアラビカ種',
+          'インドネシアはアラビカ、カネフォラ両方を生産。スマトラ式処理が特徴。'
+        ],
+        quiz:{
+          q:'マンデリンの定義で正しいのは？',
+          opts:[
+            'スマトラ全州で生産されたアラビカ種',
+            '北スマトラ州＆アチェ州で生産（ガヨマウンテン地区を除く）のアラビカ種',
+            'インドネシア全土で生産されたアラビカ種',
+            'スマトラ式処理で加工されたコーヒー豆全般'
+          ],
+          ans:1,
+          explain:'マンデリンはガヨマウンテン生産地区を除いた北スマトラ州＆アチェ州限定です。'
+        }
+      },
+      {
+        teach:[
+          '<b>アメリカとその他の特定銘柄</b>:',
+          '・ハワイコナ：アメリカ・ハワイ州南コナ地区及び北コナ地区のアラビカ種',
+          '※ハワイではコナ以外の地区産は「ハワイコナ」と名乗れません。',
+          '<b>認証コーヒー</b>の重要性:',
+          'コーヒーの品質と信頼性を保証する複数の認証制度があります。'
+        ],
+        quiz:{
+          q:'ハワイコナはハワイのどの地域で生産されたものに限定される？',
+          opts:['ハワイ全島','ハワイ島全域','南コナ地区及び北コナ地区のみ','ハワイ島の山岳地帯'],
+          ans:2,
+          explain:'ハワイコナは南コナ地区および北コナ地区の限定地域産のみ。他地区産は「ハワイコナ」と名乗れません。'
+        }
+      },
+      {
+        teach:[
+          '<b>認証コーヒーの種類</b>:',
+          '・<b>有機</b>：農林水産省の基準に合格。日本ではJAS認証なしに「有機」と表記不可',
+          '・<b>フェアトレード</b>：FLOの国際基準を満たして輸入・加工。生産者保護が目的',
+          '・<b>レインフォレストアライアンス</b>：持続可能な農業マネージメントの基準。環境保全重視',
+          '・<b>Q（Qグレーダー認証）</b>：Qグレーダーが風味を認証。一定の風味スコア以上'
+        ],
+        quiz:{
+          q:'日本で「有機コーヒー」と表記するために必要な認証は？',
+          opts:['フェアトレード認証','UTZ認証','JAS認証','Q認証'],
+          ans:2,
+          explain:'日本ではJAS認証を受けたもの以外、「有機」表記が禁止されています。'
+        }
+      },
+      {
+        teach:[
+          '<b>スペシャルティコーヒーの定義（SCAJ基準）</b>:',
+          '① 消費者の手に持つカップの中のコーヒーの液体の風味が素晴らしく美味しいこと',
+          '② その風味の素晴らしさと一貫性が再現性を持つこと',
+          '③ 国際的な取引慣行に則り、特別な価値を持つこと',
+          '定義は生豆ではなく、<span class="keyword">飲み口のコーヒー</span>の風味が基準です。',
+          'SCAJスペシャルティコーヒーの得点基準：80点以上（100点満点）'
+        ],
+        quiz:{
+          q:'スペシャルティコーヒーの最重要な評価基準は？',
+          opts:['高い標高で栽培されたこと','特定銘柄であること','カップの中のコーヒー液体の風味が素晴らしいこと','有機栽培であること'],
+          ans:2,
+          explain:'スペシャルティコーヒーは生豆ではなく、最終的な飲み口のコーヒー液体の風味が基準です。'
+        }
+      },
+      {
+        teach:[
+          '<b>認証の取得プロセス</b>',
+          '有機認証：認定機関の検査→複数年の追跡調査→認証',
+          'フェアトレード：農村組合の確認→サプライチェーン管理→認証',
+          'Q評価：Qグレーダーによるカッピング→スコア記録→公開',
+          '複数の認証を得ているコーヒーも存在します（有機+フェアトレード等）。',
+          '消費者は複数の価値軸からコーヒーを選択できるようになっています。'
+        ],
+        quiz:{
+          q:'複数の認証を同時に持つコーヒーは可能か？',
+          opts:['不可能（1種類のみ）','可能（有機+フェアトレード等の組み合わせ）','法的に禁止','国による'],
+          ans:1,
+          explain:'1つのコーヒーが有機認証+フェアトレード+Q認証など複数の認証を持つことは可能です。'
+        }
+      }
+    ]
+  },
+  {
+    id:'green_bean',
+    title:'生豆①：品種改良と遺伝',
+    icon:'🌱',
+    part:'第1部 1級',
+    lessons:[
+      {
+        teach:[
+          '<b>アラビカ種の主要品種の起源</b>:',
+          '・<b>ティピカ</b>：エチオピア（原産地） → インドネシア → オランダ → フランス → 世界へ',
+          '　特徴：収量やや低め、味は広く好まれるが病害虫に弱い',
+          '・<b>ブルボン</b>：レユニオン島（ブルボン島）での発見',
+          '　特徴：ティピカの突然変異種。ティピカより丈夫、収量多い。Red Bourbon＆Yellow Bourbon'
+        ],
+        quiz:{
+          q:'ティピカの病害虫対策での主な弱点は？',
+          opts:['低い標高にしか適応できない','さび病に強いが風味が悪い','病害虫に弱い','乾燥に耐えられない'],
+          ans:2,
+          explain:'ティピカは風味が優れていますが、病害虫に弱く、栽培が難しいという欠点があります。'
+        }
+      },
+      {
+        teach:[
+          '<b>ブラジル・インドネシアの主要品種</b>:',
+          '・<b>マラゴジッペ</b>：ブラジルのマラゴジッペで発見。ティピカの突然変異',
+          '　特徴：丈夫、果実が大きい（大粒豆）、収量は低い',
+          '・<b>ムンドノーボ</b>：スマトラ産（ティピカ変異）×ブルボンの交配',
+          '　特徴：丈夫、収量高い。ブラジルの主要栽培品種',
+          '・<b>ブルーマウンテン</b>：ジャマイカのティピカ系',
+          '　特徴：CBDにわずかに耐性、さび病には弱い'
+        ],
+        quiz:{
+          q:'ムンドノーボはどのような交配からできた品種？',
+          opts:['ティピカ×ブルボン','スマトラティピカ×ブルボン','ブルボン×カトゥーラ','ロブスタ×アラビカ'],
+          ans:1,
+          explain:'ムンドノーボはスマトラ産ティピカの変異種とブルボンの交配から誕生。ブラジルで広く栽培されます。'
+        }
+      },
+      {
+        teach:[
+          '<b>中南米の栽培品種</b>:',
+          '・<b>カトゥーラ</b>：ブラジル発。ブルボンの突然変異',
+          '　特徴：矮性（背が低い）、収量高い。中米の主要栽培品種。病害虫に弱い',
+          '・<b>カトゥアイ</b>：ムンドノーボ×カトゥーラの交配',
+          '　特徴：矮性、収量高い。だが病害虫に弱い',
+          '・<b>ゲイシャ</b>：エチオピアのゲイシャ。フザリウム菌に耐性。パナマで高値'
+        ],
+        quiz:{
+          q:'カトゥーラはどのような特徴がある品種？',
+          opts:['大粒で標高の低い地域向け','矮性で収量が多く病害虫に強い','矮性で収量が多いが病害虫に弱い','高標高向けで耐さび病性強い'],
+          ans:2,
+          explain:'カトゥーラは矮性（背が低い）で効率的に多収穫できますが、病害虫に弱いという課題があります。'
+        }
+      },
+      {
+        teach:[
+          '<b>アフリカ・インドの栽培品種</b>:',
+          '・<b>ケント</b>：インドのケント氏の農園。ティピカ系',
+          '　特徴：さび病に強い。CBDには弱い。インド栽培の主流',
+          '・<b>K7</b>：ケニア。ケント系',
+          '　特徴：さび病とCBDに耐性。丈夫で収量高い',
+          '・<b>SL28</b>：タンザニア。ブルボン系',
+          '　特徴：乾燥に強い。タンザニアで栽培',
+          '・<b>SL34</b>：ケニア。ブルボン系',
+          '　特徴：収量高い。高地栽培に適している'
+        ],
+        quiz:{
+          q:'SL28とSL34の共通点は？',
+          opts:['両方ともティピカ系である','両方ともケニア発祥','どちらもブルボン系で東アフリカで栽培','どちらもさび病に強い'],
+          ans:2,
+          explain:'SL28（タンザニア発祥）とSL34（ケニア発祥）は両方ともブルボン系で、東アフリカで栽培される重要な品種です。'
+        }
+      },
+      {
+        teach:[
+          '<b>ハイブリッド品種①：耐さび病性品種</b>',
+          '・<b>カティモール</b>：CIFC（ポルトガル）。ハイブリッドティモール×カトゥーラ',
+          '　特徴：耐さび病性強い',
+          '・<b>イカトゥ</b>：ブラジル。薬品処理ロブスタ×ムンドノーボ',
+          '　特徴：耐さび病性、収量高い。乾燥と寒さには弱い',
+          '・<b>コロンビア</b>：コロンビア。ハイブリッドティモール×カトゥーラ',
+          '　特徴：粒大きく収量高い。樹の寿命が短い→現在カスティーショに移行中'
+        ],
+        quiz:{
+          q:'コロンビア品種の主な課題は？',
+          opts:['さび病に弱い','樹の寿命が短い','病害虫が多い','高標高適応性がない'],
+          ans:1,
+          explain:'コロンビア品種は樹の寿命が短いため、現在はより長生きするカスティーショ品種への置き換えが進んでいます。'
+        }
+      },
+      {
+        teach:[
+          '<b>ハイブリッド品種②：新世代耐病性品種</b>',
+          '・<b>ルイルイレブン（Ruiru 11）</b>：ケニア。カティモール×SL28系を交配→SL28を再交配',
+          '　特徴：さび病・CBD耐性強い、収量高い',
+          '・<b>S795</b>：インド。アラビカ×リベリカの交配種',
+          '　　S288×ケントの交配。耐さび病性、収量高い',
+          '新世代品種は複数の利点を持つように設計された多目的品種です。'
+        ],
+        quiz:{
+          q:'ルイルイレブンはどのような利点を持つ品種？',
+          opts:['ティピカの高品質風味','さび病・CBD耐性と高収量','カネフォラ並みの耐病性','高標高栽培に特化'],
+          ans:1,
+          explain:'ルイルイレブンはケニアで開発された新世代品種で、さび病とCBD両方の耐性を持ちながら高収量です。'
+        }
+      },
+      {
+        teach:[
+          '<b>カネフォラ種の導入と発展</b>',
+          '1898年：イギリスのキュー植物園からシンガポール、トリニダードへ導入',
+          '1900年：ジャワ島に導入',
+          '背景：アラビカのさび病被害（1860～80年代）が甚大だったため、耐性品種として注目',
+          '栽培方法：',
+          '  小農家→自然繁殖（多様性を保つ）',
+          '  大規模農園→クローンや交配による繁殖（均一性重視）'
+        ],
+        quiz:{
+          q:'カネフォラ種がアフリカから世界へ広がった主な理由は？',
+          opts:['アラビカより風味が良い','アラビカのさび病被害が甚大だったため耐性品種として','カネフォラが最初に発見された','政治的理由'],
+          ans:1,
+          explain:'1860～80年代のアラビカのさび病大被害により、耐性を持つカネフォラの導入が進みました。'
+        }
+      }
+    ]
+  },
+  {
+    id:'cultivation',
+    title:'生豆②：栽培と病害虫',
+    icon:'🚜',
+    part:'第1部 1級',
+    lessons:[
+      {
+        teach:[
+          '<b>4つの収穫方法と特徴</b>',
+          '① <b>完熟果実を一粒ずつ摘む</b>（ハンドピック・セレクティブ）',
+          '　メリット：未成熟・異物混入率低い',
+          '　デメリット：作業コスト高い、人手不足対応困難',
+          '② <b>地面に直接しごき落とす</b>（ストリッピング）',
+          '　メリット：作業コスト安い',
+          '　デメリット：未～過熟混入、異物率高い、細菌ダメージリスク'
+        ],
+        quiz:{
+          q:'完熟果実を一粒ずつ摘む収穫方法の主な欠点は？',
+          opts:['豆が傷つきやすい','作業コストが高く人手が不足しやすい','品質にばらつきが出る','カビ混入が多い'],
+          ans:1,
+          explain:'完熟選別は品質は最高ですが、労務費が高く人手不足対応が困難という課題があります。'
+        }
+      },
+      {
+        teach:[
+          '<b>4つの収穫方法（続き）</b>',
+          '③ <b>布を敷いてしごき落とす</b>',
+          '　メリット：作業コスト比較的安い、細菌ダメージ軽減',
+          '　デメリット：未～過熟混入、異物率高い',
+          '④ <b>機械による収穫</b>',
+          '　メリット：手作業比で安い',
+          '　デメリット：未～過熟混入（方法③より少ない）、初期投資高い、平地のみ使用可能'
+        ],
+        quiz:{
+          q:'機械収穫の主な制約は？',
+          opts:['品質が悪い','平地でしか使用できない','コストが常に高い','小農家では導入困難'],
+          ans:1,
+          explain:'機械収穫は斜面では使用できず、平地栽培に限定されます。'
+        }
+      },
+      {
+        teach:[
+          '<b>シェードツリー（日よけ樹）の役割</b>',
+           'コーヒー樹の上に植える：バナナ、インガ（マメ科）等',
+          '主な効果：',
+          '① 温度差を緩和 → 昼夜温度差低下で品質向上',
+          '② 土壌浸食を防止',
+          '③ 養分供給 → 窒素固定菌の活用で肥料削減',
+          '④ 防風効果',
+          '⑤ コーヒー樹の寿命延長',
+          '⑥ 風味向上'
+        ],
+        quiz:{
+          q:'シェードツリーを植える理由として最も重要なのは？',
+          opts:['コーヒーの量を増やすため','昼夜温度差を緩和し品質向上させるため','害虫を完全に防ぐため','肥料を完全に不要にするため'],
+          ans:1,
+          explain:'シェードツリーは昼夜温度差を緩和し、結果としてコーヒーの風味が向上します。'
+        }
+      },
+      {
+        teach:[
+          '<b>土壌と標高の影響</b>',
+          '<b>土壌</b>：最も重要なのは<span class="keyword">腐植含量</span>',
+          '　酸度：弱酸性が望ましい（特にアラビカ種）',
+          '　ミネラル：カリウム、マグネシウム等が重要',
+          '<b>標高による気温低下</b>：',
+          '　100m上がると、気温は約<span class="keyword">0.6℃低下</span>',
+          '　結果：成長速度低下 → 完熟に時間 → 糖分増加 → 複雑な風味',
+          '高標高産は風味が複雑で高品質とされる理由。'
+        ],
+        quiz:{
+          q:'100m標高が上がると気温は約何℃低下する？',
+          opts:['約0.3℃','約0.6℃','約1℃','約2℃'],
+          ans:1,
+          explain:'気温は100m上がるごとに約0.6℃低下します。高標高産が高品質な理由の一つです。'
+        }
+      },
+      {
+        teach:[
+          '<b>水分要求量と耐乾性</b>',
+          '<b>アラビカ種</b>：6ヶ月程度は乾燥に耐えられる',
+          '<b>カネフォラ種</b>：4ヶ月程度は乾燥に耐えられる',
+          '適切な降水量：年間1500～3000mm',
+          '乾期と湿期：',
+          '　規則的な乾期→開花のトリガー',
+          '　その後の雨→花の着果率向上',
+          'コーヒー栽培地域の降水パターンが複雑な理由はこれです。'
+        ],
+        quiz:{
+          q:'アラビカ種が乾燥に耐えられる期間は？',
+          opts:['2ヶ月程度','4ヶ月程度','6ヶ月程度','8ヶ月程度'],
+          ans:2,
+          explain:'アラビカ種は6ヶ月程度の乾燥に耐えられます。カネフォラ種（4ヶ月）より耐性があります。'
+        }
+      },
+      {
+        teach:[
+          '<b>主要な病害：さび病（リーフラスト）</b>',
+          '症状：葉の裏側に<span class="keyword">オレンジ色の病斑</span>',
+          '発生時期：<b>雨季</b>に感染拡大',
+          '影響：葉が落ちる→光合成低下→収量減少、品質低下',
+          '対策：',
+          '　品種選択（耐さび病性品種）',
+          '　適切な湿度管理（過度な湿度を避ける）',
+          '　化学農薬の使用（銅系等）'
+        ],
+        quiz:{
+          q:'さび病が最も拡大しやすい季節は？',
+          opts:['乾期','雨季','春','夏'],
+          ans:1,
+          explain:'さび病は雨季に感染拡大します。湿度が高い環境を好むためです。'
+        }
+      },
+      {
+        teach:[
+          '<b>主要な病害：CBD（炭疽病）</b>',
+          '症状：<b>果実表面に病斑</b>',
+          '発生条件：高温・低温でおこりやすい（温度変動が影響）',
+          '地理分布：<b>主にアフリカ</b>で問題',
+          '品種別感受性：',
+          '　ティピカ系：弱い',
+          '　ブルボン系：やや弱い',
+          '　新しい品種（K7等）：耐性あり',
+          'さび病より甚大な被害は少ないですが、アフリカでは重要な課題です。'
+        ],
+        quiz:{
+          q:'CBD（炭疽病）が最も問題となる地域は？',
+          opts:['中南米','インドネシア','アフリカ','インド'],
+          ans:2,
+          explain:'CBD（炭疽病）は主にアフリカで問題となる病害です。'
+        }
+      },
+      {
+        teach:[
+          '<b>主要な害虫：ベリーボーラー（ブロッカ）</b>',
+          '正体：<span class="keyword">キクイムシの一種</span>',
+          '被害：果実に入り込み、種子（生豆）を食い荒らす',
+          'サイン：小さな穴がコーヒーチェリーに開いている',
+          '被害地域：アフリカ、特にエチオピア、タンザニア等で被害甚大',
+          '対策：',
+          '　落ちたチェリーの除去',
+          '　適切な密度の樹間管理',
+          '　選別工程での除去'
+        ],
+        quiz:{
+          q:'ベリーボーラーは何の一種？',
+          opts:['蛾の幼虫','キクイムシ','テントウムシ','ハエ'],
+          ans:1,
+          explain:'ベリーボーラーはキクイムシの一種で、コーヒーチェリーの中に入り込み豆を食い荒らします。'
+        }
+      },
+      {
+        teach:[
+          '<b>病害虫予防の4つの重要な原則</b>',
+          '① <span class="keyword">病害虫の存在しない種子や土壌</span>を使う',
+          '   → 清潔な苗床から開始',
+          '② <span class="keyword">湿度を高くしすぎない</span>（適度な剪定）',
+          '   → さび病やカビを防止',
+          '③ <span class="keyword">窒素肥料を与えすぎない</span>',
+          '   → 樹が軟弱化するのを防ぐ',
+          '④ <span class="keyword">枯れ枝を取り除く</span>',
+          '   → 病原菌の温床を排除',
+          'これらは化学農薬よりも基本的で重要な対策です。'
+        ],
+        quiz:{
+          q:'病害虫予防で最も重要な原則は？',
+          opts:['定期的な農薬散布','窒素肥料の大量投与','湿度を高く保つ','清潔な種子と土壌からの開始'],
+          ans:3,
+          explain:'清潔な種子と土壌からの開始が最も基本的で重要な予防策です。'
+        }
+      }
+    ]
+  },
+  {
+    id:'processing',
+    title:'生豆③：精選と選別',
+    icon:'⚙️',
+    part:'第1部 1級',
+    lessons:[
+      {
+        teach:[
+          '<b>水洗式（ウォッシュド）の詳細なプロセス</b>',
+          '① <b>フローター</b>：水に浮かぶ未成熟豆やゴミを浮かして除去',
+          '② <b>パルパー</b>：果肉除去機。ローラーと固定版の間で果肉をこすり取る',
+          '③ <span class="keyword">発酵槽</span>処理 or <span class="keyword">機械処理</span>（ミューシレージリムーバー）：',
+          '　　　ミューシレージ（粘液質）を分解・除去',
+          '④ <b>水洗</b>：清水で何度も洗浄',
+          '⑤ <b>乾燥</b>：天日干しまたは機械乾燥',
+          'クリーンで爽やかな風味が特徴です。'
+        ],
+        quiz:{
+          q:'発酵槽処理の主な役割は？',
+          opts:['果肉を除去する','ミューシレージを分解・除去する','豆を乾燥させる','不良豆をふるい分ける'],
+          ans:1,
+          explain:'発酵槽処理では酵素と微生物がミューシレージを分解します。'
+        }
+      },
+      {
+        teach:[
+          '<b>発酵（Fermentation）の詳細</b>',
+          '発酵の役割：',
+          '　酵素と微生物でミューシレージを分解・溶解',
+          '　所要時間：12～48時間（気温、微生物数で変動）',
+          '発酵度合いの判定：',
+          '　過度の発酵→<span class="keyword">異臭の原因</span>（酪酸菌、乳酸菌の過剰発酵）',
+          '　現代の水洗式：「フリーウォッシュド」という昔の伝統的フローター→パルパー→発酵',
+          '　最新トレンド：水を使わない乾式発酵処理も増加中'
+        ],
+        quiz:{
+          q:'発酵が過度になった場合の最も重大な問題は？',
+          opts:['豆が硬くなる','異臭が生じる','カビが生える','乾燥が遅くなる'],
+          ans:1,
+          explain:'過度の発酵は酪酸菌や乳酸菌の過剰発酵により異臭を引き起こします。'
+        }
+      },
+      {
+        teach:[
+          '<b>パルプドナチュラル（ハニープロセス）</b>',
+          '処理方法：<b>パルパーで未成熟果実を取り除く</b> → ミューシレージ付きで乾燥',
+          '特徴：',
+          '　① 非水洗式より品質が均一（未成熟豆を除去）',
+          '　② 水洗式より甘い、フルーティー（ミューシレージ付き発酵）',
+          '　③ 水使用量が水洗式より少ない（環境負荷が小さい）',
+          '　④ ブラジルで発展した処理方法',
+          '名前の由来：ミューシレージの粘液質がハチミツのような見た目・食感'
+        ],
+        quiz:{
+          q:'パルプドナチュラルと水洗式の最大の違いは？',
+          opts:['乾燥時間','ミューシレージの有無','豆のサイズ','パルパーの使用'],
+          ans:1,
+          explain:'パルプドナチュラルはミューシレージを付けたまま乾燥するため、非水洗式より甘く、水洗式より甘い中間的な風味です。'
+        }
+      },
+      {
+        teach:[
+          '<b>スマトラ式処理の独特性</b>',
+          'インドネシア・スマトラ島、スラウェシ島で行われる独自方法',
+          '特徴：',
+          '① <span class="keyword">柔らかい（湿った）状態で脱殻</span>',
+          '　　　→ パーチメント除去時に豆が傷つきやすい、菌侵入リスク高い',
+          '② 独特の<span class="keyword">深緑色</span>を呈する',
+          '③ スモーキー、アーシーな風味特性',
+          '④ 高湿度環境での保管リスク',
+          'リスク：品質にばらつき、カビの危険性'
+        ],
+        quiz:{
+          q:'スマトラ式処理の最大のリスクは？',
+          opts:['豆の黒ずみ','菌の侵入と品質にばらつき','焙煎時の割れ','乾燥に時間がかかる'],
+          ans:1,
+          explain:'スマトラ式は湿った状態で脱殻するため、豆が傷つきやすく菌が侵入しやすいという課題があります。'
+        }
+      },
+      {
+        teach:[
+          '<b>乾燥プロセスの温度管理</b>',
+          '<b>最高品温（豆の温度）制限</b>：',
+          '　コーヒーチェリー：<span class="keyword">45℃を超えない</span>',
+          '　パーチメントコーヒー：<span class="keyword">40℃を超えない</span>',
+          '<b>熱風温度の上限</b>：<span class="keyword">60℃以下</span>',
+          '理由：高温→ビーンズ内部の風味成分が変性・損失',
+          'トレンド：低温乾燥（ナチュラルドライ）に回帰→高品質化'
+        ],
+        quiz:{
+          q:'パーチメントコーヒーの最高品温は？',
+          opts:['35℃','40℃','45℃','50℃'],
+          ans:1,
+          explain:'パーチメント状態での乾燥は40℃を超えないように管理する必要があります。'
+        }
+      },
+      {
+        teach:[
+          '<b>乾燥プロセスの含水率変化</b>',
+          '収穫直後の含水率（品温）：',
+          '　チェリー：60～80%',
+          '　パーチメント状：50～60%',
+          '乾燥後の含水率（目標）：<span class="keyword">10～13%</span>',
+          '含水率の測定方法：',
+          '　電気式水分計を使用',
+          '　精密な値が必要（±1%の誤差で品質が変わる）'
+        ],
+        quiz:{
+          q:'コーヒー生豆の最終含水率の目標は？',
+          opts:['5～8%','10～13%','15～18%','20%以上'],
+          ans:1,
+          explain:'生豆の含水率は10～13%が目標。これは保存安定性と風味を両立するバランスポイントです。'
+        }
+      },
+      {
+        teach:[
+          '<b>選別プロセスの流れ（図1-⑥参照）</b>',
+          '① <b>風力選別</b>：軽いゴミ、デブリ、虫を風で吹き飛ばす',
+          '② <b>スクリーン選別</b>：スクリーンサイズ（ふるい）で粒度分け',
+          '③ <b>比重選別</b>：密度が異なる豆を分離（高密度=完全豆）',
+          '④ <b>電子選別</b>：<span class="keyword">光のセンサー</span>で色違いを除去',
+          '⑤ <b>ハンドピック</b>：人的選別で最終品質確保',
+          '複数段階で品質を確保します。'
+        ],
+        quiz:{
+          q:'選別プロセスで黒豆や未成熟豆を除去する段階は？',
+          opts:['風力選別','スクリーン選別','電子選別','ハンドピック'],
+          ans:2,
+          explain:'電子選別は光のセンサーで色の違いを検出し、黒豆や未成熟豆（変色豆）を除去します。'
+        }
+      },
+      {
+        teach:[
+          '<b>電子選別（カラーソーター）の詳細</b>',
+          '仕組み：',
+          '　豆が光を通す → RGBセンサーで色を認識 → エアジェットで排出',
+          '除去対象：',
+          '　✓ 黒豆（発酵不良）',
+          '　✓ 未成熟豆（淡緑色）',
+          '　✓ 変色した豆',
+          '除去できない：',
+          '　✗ 虫食い豆（外見は正常）',
+          '　✗ かけ豆（サイズで分離されていれば除去）',
+          '最新技術で精度向上していますが、完全ではありません。'
+        ],
+        quiz:{
+          q:'電子選別で除去できない豆は？',
+          opts:['黒豆','虫食い豆（内部のみ被害）','未成熟豆','変色豆'],
+          ans:1,
+          explain:'虫食い豆は外見で判定できないため、電子選別では除去できず、ハンドピックで対応が必要です。'
+        }
+      }
+    ]
+  },
+  {
+    id:'components',
+    title:'生豆④：主要成分',
+    icon:'🧪',
+    part:'第1部 1級',
+    lessons:[
+      {
+        teach:[
+          '<b>アミノ酸の構成</b>',
+          '主要アミノ酸（多い順）：',
+          '　アスパラギン酸、グルタミン酸（酸性）',
+          '　ヒスチジン、アラニン、セリン等',
+          'アミノ酸の役割：',
+          '　① 褐色色素の前駆体（焙煎時）',
+          '　② 香気成分の前駆体（メイラード反応）',
+          '　③ 苦味成分の前駆体',
+          'アラビカ種がカネフォラ種より風味豊かな理由の1つです。'
+        ],
+        quiz:{
+          q:'アミノ酸が焙煎時に変化して生成される物質は？',
+          opts:['カフェイン','褐色色素と香気成分','脂質','灰分'],
+          ans:1,
+          explain:'アミノ酸は焙煎時のメイラード反応で褐色色素と香気成分の前駆体となります。'
+        }
+      },
+      {
+        teach:[
+          '<b>クロロゲン酸の詳細</b>',
+          '化学構造：<span class="keyword">コーヒー酸とキナ酸が結合</span>したもの',
+          '含有量：アラビカ種に多い（カネフォラ種の1.5倍以上）',
+          '味わい：',
+          '　弱い酸味と苦味、メタリックな味',
+          'ジクロロゲン酸（2分子のクロロゲン酸）：',
+          '　→ 渋味の主要原因',
+          '　→ 未成熟豆に多い',
+          '品質判定：クロロゲン酸含量から熟度を推定可能'
+        ],
+        quiz:{
+          q:'クロロゲン酸の構成要素は？',
+          opts:['グルコースとフルクトース','コーヒー酸とキナ酸','カフェインと糖','脂質とミネラル'],
+          ans:1,
+          explain:'クロロゲン酸はコーヒー酸とキナ酸が結合した物質です。'
+        }
+      },
+      {
+        teach:[
+          '<b>糖分（炭水化物）の詳細</b>',
+          '<b>少糖類（ショ糖が主）</b>：',
+          '　① アラビカ種に多く含まれる（カネフォラ種の2～3倍）',
+          '　② チェリーの熟度に応じて増加（完熟豆に高濃度）',
+          '　③ 焙煎時に：',
+          '　　　酸・褐色色素・香気成分の前駆体に変化',
+          '　　　→ 甘い焙煎豆の風味の源',
+          '<b>複合炭水化物（多糖類）</b>：',
+          '　水溶性：抽出液のコク、甘さに影響',
+          '　不溶性：豆の硬さに影響'
+        ],
+        quiz:{
+          q:'ショ糖がアラビカ種に多く含まれる理由は？',
+          opts:['標高が高いから','アフリカ原産だから','栽培地が違うから','説明不要（事実）'],
+          ans:3,
+          explain:'アラビカ種はカネフォラ種の2～3倍のショ糖を含みます。これが高品質風味の基礎です。'
+        }
+      },
+      {
+        teach:[
+          '<b>タンパク質とペプチド</b>',
+          '含有量：多糖類の次に多い（全成分の10～12%）',
+          '種類：',
+          '　① 水溶性のアルブミン：約50%',
+          '　② アルカロイド結合タンパク（カフェイン含有）',
+          '　③ その他のタンパク質',
+          '焙煎時の変化：',
+          '　メイラード反応でアミノ酸が分解',
+          '　→ 香気成分、褐色色素、苦味成分の生成',
+          'タンパク質の分解度=焙煎度の指標の1つ'
+        ],
+        quiz:{
+          q:'コーヒー豆中のタンパク質の約50%を占める形態は？',
+          opts:['ケラチン','アルブミン','グロブリン','エラスチン'],
+          ans:1,
+          explain:'水溶性のアルブミンがコーヒータンパク質の約50%を占めます。'
+        }
+      },
+      {
+        teach:[
+          '<b>脂質（コーヒーオイル）</b>',
+          '含有量：全体の11～17%',
+          'コーヒー豆の脂質構成（75～80%）：',
+          '　① 油脂（グリセリン+脂肪酸）：',
+          '　　　　リノール酸、パルミチン酸、ステアリン酸、オレイン酸',
+          '　② その他の脂溶性成分',
+          '焙煎による変化：<span class="keyword">脂質は変化が小さい</span>',
+          'ペーパーフィルター使用時：脂質が除去される（カップに微量）',
+          'コーヒーの口当たり、コク感に大きく影響'
+        ],
+        quiz:{
+          q:'脂質がコーヒー風味に与える影響で最も重要なのは？',
+          opts:['酸味','苦味','口当たりとコク感','香り'],
+          ans:2,
+          explain:'脂質は焙煎で変化が小さく、口当たりとコク感に大きく影響します。'
+        }
+      },
+      {
+        teach:[
+          '<b>有機酸の種類と含有量</b>',
+          'クロロゲン酸以外の酸：',
+          '　① クエン酸（レモン類と同じ成分、爽やかな酸）',
+          '　② リンゴ酸（リンゴと同じ成分）',
+          '　③ キナ酸（独特の刺激的な酸、メタリック）',
+          '　④ リン酸',
+          '総酸量：最大約2%',
+          '特性：',
+          '　アラビカ種に多い',
+          '　アフリカ・中米産で高い傾向',
+          '　焙煎で減少'
+        ],
+        quiz:{
+          q:'コーヒーの総酸量は最大で？',
+          opts:['0.5%','1%','約2%','約5%'],
+          ans:2,
+          explain:'コーヒーの総酸量は最大約2%です。アラビカ種やアフリカ・中米産で高い傾向があります。'
+        }
+      },
+      {
+        teach:[
+          '<b>灰分（ミネラル）</b>',
+          '含有量：全体の約4～5%（生豆の場合）',
+          '主要成分：',
+          '　① <span class="keyword">カリウム：約40%</span>',
+          '　② マグネシウム、カルシウム、ナトリウム等',
+          '　③ 総計30種類以上のミネラル',
+          '生産地による差：',
+          '　カネフォラ種 > アラビカ種',
+          '　非水洗式 > 水洗式',
+          'ミネラルが多いほど重い豆→品質が高いと判定される傾向'
+        ],
+        quiz:{
+          q:'コーヒー豆の灰分に最も多く含まれるミネラルは？',
+          opts:['カルシウム','マグネシウム','カリウム','ナトリウム'],
+          ans:2,
+          explain:'灰分の約40%はカリウムです。カネフォラ種や非水洗式に灰分が多い傾向があります。'
+        }
+      },
+      {
+        teach:[
+          '<b>カフェインの含有と特性</b>',
+          '含有量：',
+          '　アラビカ種：0.8～1.4%',
+          '　カネフォラ種：1.7～4%（アラビカの2～3倍）',
+          '焙煎による変化：',
+          '　<span class="keyword">焙煎ではカフェイン含量はほぼ変わらない</span>',
+          '　200℃を超えても分解されない',
+          '　重深焙煎でも同量のカフェイン',
+          '健康面：',
+          '　一杯のコーヒー（150ml）＝カフェイン100mg程度',
+          '　体感的な違いは後期焙煎の脂質流出による口感の違い'
+        ],
+        quiz:{
+          q:'焙煎によってカフェイン含量はどう変わる？',
+          opts:['増加する','減少する','ほぼ変わらない','焙煎度により異なる'],
+          ans:2,
+          explain:'カフェインは焙煎の温度でもほぼ分解されず、含量は変わりません。'
+        }
+      },
+      {
+        teach:[
+          '<b>カフェインレスコーヒー（デカフェ）の製造方法</b>',
+          '日本での定義：カフェイン90%以上を除去したもの',
+          '① <b>有機溶媒法</b>（ジクロロメタン、酢酸エチル）:',
+          '　　→ 日本では禁止（残留毒性懸念）',
+          '② <b>水による抽出</b>（スイス水処理法等）:',
+          '　　→ 風味損失が多い',
+          '③ <b>超臨界CO2法</b>or<b>液体CO2法</b>:',
+          '　　→ 風味損失が少ない（高コスト）',
+          'より安全で風味の良い方法の採用が増加傾向です。'
+        ],
+        quiz:{
+          q:'カフェインレスコーヒーで最も風味が損失しない製造方法は？',
+          opts:['有機溶媒法','水による抽出','超臨界CO2法','真空蒸留'],
+          ans:2,
+          explain:'超臨界CO2法は風味損失が少なく最も優れた方法ですが、コストが高いため普及は限定的です。'
+        }
+      }
+    ]
+  },
+  {
+    id:'roasting',
+    title:'焙煎①：焙煎機と方法',
+    icon:'🔥',
+    part:'第1部 1級',
+    lessons:[
+      {
+        teach:[
+          '<b>焙煎機の3つの撹拌方式</b>',
+          '① <b>機械的撹拌型（バケットホイール型）</b>:',
+          '　　　回転ドラムの中にバケット（羽根）を装備',
+          '　　　豆を持ち上げ、落下させることで撹拌',
+          '② <b>遠心力型（セントリフューガル型）</b>:',
+          '　　　回転力で豆を壁に押し付け、回転しながら加熱',
+          '③ <b>熱風型（フルイディッドベッド型）</b>:',
+          '　　　高速熱風で豆を浮かせて撹拌',
+          '　　　→ 超短時間焙煎（～5分）も可能'
+        ],
+        quiz:{
+          q:'熱風型焙煎機の最大の特徴は？',
+          opts:['風味が最高','超短時間焙煎が可能','コストが最安','すべての豆に最適'],
+          ans:1,
+          explain:'熱風型（フルイディッドベッド型）は～5分の超短時間焙煎が可能です。'
+        }
+      },
+      {
+        teach:[
+          '<b>焙煎の温度プロファイル</b>',
+          '焙煎曲線（縦軸：温度、横軸：時間）：',
+          '① 生豆投入 → 温度一旦低下',
+          '② その後、次第に上昇',
+          '③ 最後はゆるやかな上昇に',
+          '重要な指標：<span class="keyword">昇温速度</span>',
+          '　急激な上昇 → ハゼ（爆裂音）が激しい',
+          '　ゆるやかな上昇 → ガス発生穏やか、膨張度が小さい',
+          'プロファイル管理がコーヒーの最終風味を決定します。'
+        ],
+        quiz:{
+          q:'焙煎中の昇温速度が遅いと何が起こる？',
+          opts:['豆が焼けず不完全','ハゼが激しくなる','ガスの発生が穏やかで膨張度が小さい','焙煎時間が短縮される'],
+          ans:2,
+          explain:'ゆるやかな昇温はガスの発生を穏やかにし、膨張度を小さく保ちます。'
+        }
+      },
+      {
+        teach:[
+          '<b>焙煎豆の物理構造</b>',
+          '焙煎豆は<span class="keyword">スポンジに似た空洞から成り立つ</span>',
+          '膨張プロセス：',
+          '① 加熱により豆内の水分と揮発性物質がガス化',
+          '② ガス圧力で豆が膨張',
+          '③ 膨張度（比率）が大きい=空洞が大きい',
+          '抽出への影響：',
+          '　膨張度大 → 空洞大 → 湯と接する表面積大 → 抽出量増加',
+          '　膨張度大 → 収率向上（ポーション効率）',
+          '深焙煎ほど膨張度が大きい傾向があります。'
+        ],
+        quiz:{
+          q:'焙煎豆の膨張度が大きいことの利点は？',
+          opts:['焙煎時間が短くなる','風味が濃くなる','抽出時の表面積が大きくなり抽出効率UP','カフェインが増加する'],
+          ans:2,
+          explain:'膨張度が大きい豆は空洞が大きく、湯と接する表面積が増加して抽出効率が向上します。'
+        }
+      },
+      {
+        teach:[
+          '<b>焙煎豆の色測定：L*a*b*色空間</b>',
+          'CIE規格化の国際標準色空間：',
+          '　L* = <span class="keyword">明度（0=黒、100=白）</span>',
+          '　a = 赤～緑方向',
+          '　b = 黄～青方向',
+          '日本での使用：<span class="keyword">L値のみが一般的</span>',
+          '　L値が低い（黒い）= 深焙煎',
+          '　L値が高い（明るい）= 浅焙煎',
+          '粉体で計測：油脂ののじみ方や粉の凝結状態で見た目が変わるため注意'
+        ],
+        quiz:{
+          q:'L*a*b*色空間でL値が低いほど何が進んでいる？',
+          opts:['浅焙煎である','深焙煎である','風味が濃い','カフェイン含量が多い'],
+          ans:1,
+          explain:'L値が低い（黒い）ほど深焙煎が進んでいます。'
+        }
+      },
+      {
+        teach:[
+          '<b>焙煎による物理的変化</b>',
+          '豆のサイズ：生豆より焙煎豆で大きい（膨張）',
+          '豆の重量：減少（水分蒸発、有機物分解）',
+          '　通常：10～15%の重量減少',
+          '豆の色：淡黄色 → 褐色 → 黒褐色',
+          '豆の表面：',
+          '　浅焙煎：つるつる、油分少ない',
+          '　深焙煎：油分が浮き出ている',
+          '音（ハゼ）：1ハゼ（1st crack）と2ハゼ（2nd crack）'
+        ],
+        quiz:{
+          q:'焙煎による豆の重量変化で最も一般的なのは？',
+          opts:['増加する','10～15%減少する','50%以上減少する','変わらない'],
+          ans:1,
+          explain:'焙煎中の水分蒸発と有機物分解により、豆の重量は10～15%減少するのが一般的です。'
+        }
+      }
+    ]
+  },
+  {
+    id:'roast_chemistry',
+    title:'焙煎②：化学変化と成分',
+    icon:'⚗️',
+    part:'第1部 1級',
+    lessons:[
+      {
+        teach:[
+          '<b>焙煎中の総酸量の変化パターン</b>',
+          '① 初期（浅焙煎）: 総酸量が<span class="keyword">増加</span>',
+          '　　　理由：クロロゲン酸の熱分解',
+          '　　　　　　 → キナ酸・コーヒー酸が生成',
+          '　　　　　　 ショ糖の熱分解',
+          '　　　　　　 → 酢酸、ギ酸、乳酸、グリコール酸',
+          '② 中期以降（深焙煎）: 総酸量が<span class="keyword">減少</span>',
+          '　　　理由：酸が熱分解される',
+          '　　　　　　 （火のかけ方で質・強さが大きく変わる）'
+        ],
+        quiz:{
+          q:'焙煎初期に酸量が増加する最大の理由は？',
+          opts:['酸が注入される','クロロゲン酸の熱分解','豆が乾燥する','ガスが発生する'],
+          ans:1,
+          explain:'クロロゲン酸やショ糖の熱分解により酸が生成されるため、初期は総酸量が増加します。'
+        }
+      },
+      {
+        teach:[
+          '<b>ラクトン（Lactone）の形成と影響</b>',
+          '化学プロセス：',
+          '　キナ酸の一部 → ラクトン（分子内結合）に転換',
+          '　ラクトンの形態で焙煎豆・コーヒー液内に存在',
+          '時間経過による変化：',
+          '　抽出液中で結合が外れる',
+          '　→ ラクトンがキナ酸に変化',
+          '結果：',
+          '　保存時間とともに酸味が増加する（遅延型）',
+          'これがコーヒー風味の時間経過による変化の1つです。'
+        ],
+        quiz:{
+          q:'ラクトンがキナ酸に変化する場所は？',
+          opts:['焙煎中','抽出液中','保存中','口腔内'],
+          ans:1,
+          explain:'ラクトンは抽出液中で結合が外れてキナ酸に戻り、保存時に酸味が増加する原因となります。'
+        }
+      },
+      {
+        teach:[
+          '<b>褐色色素の段階的形成</b>',
+          '順序（焙煎進行に伴う変化）：',
+          '① <b>褐色色素C</b>：クロロゲン酸＋ショ糖',
+          '② <b>カラメル</b>：ショ糖の熱分解',
+          '③ <b>メラノイジン</b>：メイラード反応（アミノ酸+還元糖）',
+          '④ <b>褐色色素B</b>：メラノイジンが重合',
+          '⑤ <b>褐色色素A</b>：＋タンパク質＋多糖類',
+          '焙煎進行とともに <b>A の割合が増加</b>',
+          'Aが苦味と色の強さに最も寄与'
+        ],
+        quiz:{
+          q:'焙煎が進むにつれて最も増加する褐色色素は？',
+          opts:['褐色色素C','カラメル','メラノイジン','褐色色素A'],
+          ans:3,
+          explain:'焙煎が進むにつれて褐色色素Aの割合が増加します。これが深焙煎の黒さと苦味を生み出します。'
+        }
+      },
+      {
+        teach:[
+          '<b>香気成分の形成と変化</b>',
+          '<b>香気成分は約650種類</b>、主要なもの~40種',
+          '化学分類と焙煎進行での変化：',
+          '① <b>フェノール類</b>（スモーク臭）: 単調増加',
+          '② <b>ピロール・ピリジン類</b>（刺激臭）: 単調増加',
+          '③ <b>酸類</b>（酸っぱい香り）: 増加後減少',
+          '④ <b>フラン類</b>（カラメル甘い香り、ローストの香り）: 増加後減少',
+          '⑤ <b>ピラジン類</b>（ナッツ～グリーン～土の香り）: 変化が少ない',
+          'この多様な香り成分の組み合わせがコーヒーの複雑な香りを形成します。'
+        ],
+        quiz:{
+          q:'焙煎進行で変化が最も少ない香気成分分類は？',
+          opts:['フェノール類','フラン類','ピラジン類','ピロール類'],
+          ans:2,
+          explain:'ピラジン類は焙煎進行でも変化が少なく、安定した香りを保ちます。'
+        }
+      },
+      {
+        teach:[
+          '<b>苦味成分の生成メカニズム</b>',
+          '苦味の構成：',
+          '① <span class="keyword">褐色色素由来</span>の苦味（分子量が大きい）',
+          '　　　分子量大→より重厚な苦味',
+          '② <b>ジケトピペラジン</b>：アミノ酸の重合からできるアルカロイド',
+          '　　　焙煎後期に増加',
+          '③ その他のアルカロイド',
+          '深焙煎の苦味と重厚さは複雑な分子が増加するためです。',
+          'ただし、焙煎技術により苦味の質は大きく変わります。'
+        ],
+        quiz:{
+          q:'深焙煎の苦味がより重厚になる理由は？',
+          opts:['カフェインが増加する','褐色色素の分子量が大きくなる','カリウムが増加する','脂質が変性する'],
+          ans:1,
+          explain:'焙煎進行で褐色色素の分子量が増加し、より重厚な苦味を呈するようになります。'
+        }
+      },
+      {
+        teach:[
+          '<b>焙煎中の成分変化の3分類</b>',
+          '① <b>あまり変化しない成分</b>:',
+          '　　　カフェイン、脂質、灰分（ミネラル）、多糖類、タンパク質',
+          '② <b>大きく減少する成分</b>:',
+          '　　　少糖類（ショ糖）、アミノ酸、クロロゲン酸',
+          '③ <b>増える成分</b>:',
+          '　　　褐色色素（A、B）、香気成分、ジケトピペラジン',
+          'この変化パターンを理解することが焙煎の科学の本質です。'
+        ],
+        quiz:{
+          q:'焙煎中に大きく減少する成分は？',
+          opts:['カフェイン','脂質','少糖類とクロロゲン酸','灰分'],
+          ans:2,
+          explain:'少糖類とクロロゲン酸は焙煎中に大きく減少し、褐色色素や香気成分に変化します。'
+        }
+      }
+    ]
+  },
+  {
+    id:'grinding',
+    title:'粉砕',
+    icon:'⚡',
+    part:'第1部 1級',
+    lessons:[
+      {
+        teach:[
+          '<b>粉砕の目的</b>',
+          '① <span class="keyword">抽出効率の向上</span>：豆の表面積を増加',
+          '② 抽出時間の短縮',
+          '③ 風味の均一性：粒度が揃うことで抽出が均一になる',
+          '<b>粉砕粒度の分類</b>:',
+          '　極細粉（エスプレッソ向け）',
+          '　細粉（ペーパードリップ向け）',
+          '　中粉（サイフォン向け）',
+          '　粗粉（フレンチプレス向け）',
+          '抽出方法により最適粒度が異なります。'
+        ],
+        quiz:{
+          q:'粉砕の最も重要な目的は？',
+          opts:['豆の重量を減らす','抽出効率を向上させる','香りを強くする','保存期間を延ばす'],
+          ans:1,
+          explain:'粉砕により豆の表面積が増加し、抽出効率が向上します。'
+        }
+      },
+      {
+        teach:[
+          '<b>粉砕時の熱発生と品質への影響</b>',
+          '問題：粉砕時の摩擦により<span class="keyword">温度上昇</span>が起こる',
+          '影響：',
+          '　① 香気成分が失われやすくなる',
+          '　② 風味が変わる',
+          '　③ 酸化が促進される',
+          '対策：',
+          '　① 低速粉砕機（バーグラインダー）を使用',
+          '　② 粉砕直前に冷凍する',
+          '　③ 粉砕直後の使用（保存は避ける）',
+          '粉砕のタイミングと方法が最終風味に大きく影響します。'
+        ],
+        quiz:{
+          q:'粉砕時の熱発生が風味に与える最大の悪影響は？',
+          opts:['苦味が強くなる','香気成分が失われやすくなる','カフェインが増加する','粒度が不均一になる'],
+          ans:1,
+          explain:'粉砕時の摩擦熱で香気成分が失われやすくなり、風味が低下します。'
+        }
+      },
+      {
+        teach:[
+          '<b>粉砕機の種類と特徴</b>',
+          '① <b>ブレードグラインダー</b>（刃型）:',
+          '　　メリット：安い、速い',
+          '　　デメリット：熱が出やすい、粒度ばらつき大',
+          '② <b>バーグラインダー</b>（臼型）:',
+          '　　メリット：粒度均一、熱が少ない（低速）',
+          '　　デメリット：高い、時間がかかる',
+          '③ <b>ロールグラインダー</b>:',
+          '　　メリット：大量処理、粒度均一',
+          '　　デメリット：高価、調整が複雑',
+          'スペシャルティコーヒーではバーグラインダーが標準'
+        ],
+        quiz:{
+          q:'粉砕の品質と熱対策を最優先する場合の最良の粉砕機は？',
+          opts:['ブレードグラインダー','バーグラインダー','ロールグラインダー','フードプロセッサー'],
+          ans:1,
+          explain:'バーグラインダーは低速で熱が少なく、粒度が均一で最高品質です。'
+        }
+      },
+      {
+        teach:[
+          '<b>ふるいの規格</b>',
+          '<b>国際標準：ISOの勧告</b>',
+          '　各国で使用されるふるいの目開きは、',
+          '　<span class="keyword">ISOの勧告に基づきほぼ同等</span>',
+          '<b>メッシュの定義</b>',
+          '　メッシュ = <span class="keyword">1インチあたりの網目の数</span>',
+          '　例）20メッシュ',
+          '　　　1インチ（2.54cm）に20本の線',
+          '　　　→約1.27mmの目開き',
+          '　例）80メッシュ',
+          '　　　1インチに80本の線',
+          '　　　→約0.18mmの目開き',
+          '<b>粒度の表現例</b>',
+          '　「#60-80メッシュ」',
+          '　= 60メッシュと80メッシュの間に通す粉',
+          '　= 約0.25～0.18mmの粒度範囲',
+          '<b>実務での活用</b>',
+          '　ふるい分けにより粒度の均一性を確認',
+          '　スペシャルティコーヒーの品質管理に使用',
+          '　国際取引での統一基準として機能'
+        ],
+        quiz:{
+          q:'「#60-80メッシュ」とはどの粒度範囲？',
+          opts:['60mm～80mm','60μm～80μm','約0.25mm～0.18mm','約2.5mm～1.8mm'],
+          ans:2,
+          explain:'#60-80メッシュは60メッシュ（0.25mm）と80メッシュ（0.18mm）の間の粒度範囲です。'
+        }
+      }
+    ]
+  },
+  {
+    id:'packaging',
+    title:'包装',
+    icon:'📦',
+    part:'第1部 1級',
+    lessons:[
+      {
+        teach:[
+          '<b>包装方法の4つのタイプ</b>',
+          '① <b>ガス置換包装</b>（窒素ガス充填）:',
+          '　　　豆を酸素から遮断、酸化を防止',
+          '② <b>脱酸素剤封入包装</b>:',
+          '　　　鉄の酸化反応 or アスコルビン酸で酸素吸収',
+          '③ <b>バルブ付包装</b>（ワンウェイバルブ）:',
+          '　　　豆から放出されるCO2を逃がしつつ外部酸素を遮断',
+          '④ <b>真空包装</b>:',
+          '　　　空気を完全に抜き出す',
+          'バルブ付が最も一般的で実用的です。'
+        ],
+        quiz:{
+          q:'焙煎直後のコーヒー豆を包装する際の主な課題は？',
+          opts:['豆が膨張して袋が破ける','大量のCO2が放出される','酸化が急速に進む','すべての気体を抜く必要がある'],
+          ans:1,
+          explain:'焙煎直後は豆からCO2が大量に放出されるため、ワンウェイバルブ付包装が最適です。'
+        }
+      },
+      {
+        teach:[
+          '<b>包装材料のガスバリア性</b>',
+          '<b>ガスバリア性（酸素遮断能）の目安</b>:',
+          '　最高（ほぼ遮断）：<b>アルミ箔</b>',
+          '　高い：アルミ蒸着（アルミメッシュ層）',
+          '　中程度：クラフト紙＋PE（ポリエチレン）',
+          '　低い：紙のみ',
+          'バリア性の判定方法：',
+          '　<span class="keyword">コーヒーの香りが感じられるか</span>',
+          '　香りが感じられる = バリア性が低い',
+          '　香りが感じられない = バリア性が高い'
+        ],
+        quiz:{
+          q:'最もガスバリア性が高い包装材料は？',
+          opts:['クラフト紙','PE（ポリエチレン）','アルミ蒸着','アルミ箔'],
+          ans:3,
+          explain:'アルミ箔が最もガスバリア性が高く、酸素を完全に遮断します。'
+        }
+      },
+      {
+        teach:[
+          '<b>焙煎豆からのCO2放出</b>',
+          'CO2の量：',
+          '　焙煎豆100g → 最大約<span class="keyword">500cm³のCO2</span>が放出される',
+          '放出パターン：',
+          '　① 焙煎直後：最も多量（数時間で大量）',
+          '　② 1日後：減少',
+          '　③ 1週間後：さらに減少',
+          '　④ 2週間以上：ほぼ安定',
+          'バルブ付包装でこのCO2を効率的に逃がしながら、',
+          '外部酸素を遮断する必要があります。'
+        ],
+        quiz:{
+          q:'焙煎豆100gが放出するCO2は最大約何cm³？',
+          opts:['約100cm³','約300cm³','約500cm³','約1000cm³'],
+          ans:2,
+          explain:'焙煎豆100gから最大約500cm³のCO2が放出されます。'
+        }
+      },
+      {
+        teach:[
+          '<b>ドライチェリー・パーチメント状での保管</b>',
+          'ドライチェリー（非水洗式）：',
+          '　経時変化が比較的緩やか',
+          '　保存性が比較的高い',
+          'パーチメント状：',
+          '　経時変化が比較的緩やか',
+          '　ドライチェリーより経時変化が速い',
+          '保管条件：',
+          '　温度：低い方が経時変化を抑えられる',
+          '　　　　（ただし低温→高湿になりやすい）',
+          '　湿度：60%を超えない',
+          '温度と湿度のバランス管理が重要です。'
+        ],
+        quiz:{
+          q:'生豆の保存で湿度の上限は？',
+          opts:['50%以下','60%以下','70%以下','制限なし'],
+          ans:1,
+          explain:'生豆保存時の湿度は60%を超えないようにする必要があります。'
+        }
+      }
+    ]
+  },
+  {
+    id:'cuptest',
+    title:'カップテスト',
+    icon:'☕',
+    part:'第1部 1級',
+    lessons:[
+      {
+        teach:[
+          '<b>カップテストの基本セットアップ</b>',
+          'サンプル量：<b>約7g</b>の焙煎豆を粗挽き',
+          'コップ：<b>1サンプルずつ専用カップ</b>を用意',
+          '粉砕方法：<b>粗挽き</b>（約1カップ分の量を一度に粉砕）',
+          '湯量：<b>約135mL</b>の熱湯（85～90℃）',
+          'カップ数：複数サンプル同時テスト（最低3杯推奨）',
+          '抽出時間：浸漬法で約4分',
+          '正確な条件設定がテストの信頼性を決定します。'
+        ],
+        quiz:{
+          q:'カップテストで用いるサンプルの粉砕粒度は？',
+          opts:['極細粉','細粉','中粉','粗挽き'],
+          ans:3,
+          explain:'カップテストは粗挽きサンプルで、浸漬法により抽出されます。'
+        }
+      },
+      {
+        teach:[
+          '<b>カップテスト中の環境管理</b>',
+          '<b>5つの重要な注意点</b>:',
+          '① <b>無味無臭の水・容器</b>を確認',
+          '　　→ 水道水の塩素臭、容器の化学臭は風味を狂わせる',
+          '② <b>匂いの強い化粧品の使用を避ける</b>',
+          '　　→ 香水、ハンドクリーム等は嗅覚に影響',
+          '③ <b>過度の飲酒・喫煙を避ける</b>',
+          '　　→ 味覚・嗅覚が麻痺する',
+          '④ <b>過度の刺激物を避ける</b>（辛い食べ物等）',
+          '⑤ <b>風邪をひかない</b>（健康維持に努める）',
+          '　　→ 風邪では評価が不可能になる'
+        ],
+        quiz:{
+          q:'カップテスト直前に避けるべき行動は？',
+          opts:['水を飲む','匂いの強い化粧品の使用','歯磨き','深呼吸'],
+          ans:1,
+          explain:'匂いの強い化粧品は嗅覚に直接影響し、カップテストの評価精度を大きく低下させます。'
+        }
+      },
+      {
+        teach:[
+          '<b>カップテストの実施手順</b>',
+          '1. 複数サンプル同時に粉砕・抽出開始',
+          '2. <b>1回目のテイスティング（熱い状態）</b>',
+          '　　　香り、酸味、甘さ、コク、後味を評価',
+          '3. コップを冷めるまで放置（15～20分）',
+          '4. <b>2回目のテイスティング（冷めた状態）</b>',
+          '　　　温度が下がると風味が変わるため',
+          '　　　異なる香りや甘さが感じられる',
+          '<span class="keyword">計2回のテイスティング</span>により、',
+          '多角的に品質を評価します。'
+        ],
+        quiz:{
+          q:'カップテストで2回テイスティングを行う理由は？',
+          opts:['正確性を2倍にするため','温度によって風味が変わるため','火傷を防ぐため','法律で定められているため'],
+          ans:1,
+          explain:'温度が下がると香りや甘さが異なって感じられるため、2回の評価で多角的に品質を判定します。'
+        }
+      },
+      {
+        teach:[
+          '<b>カップテストの評価項目</b>',
+          '① <b>香り（Aroma）</b>：粉の香り、抽出液の香り',
+          '② <b>風味（Flavor）</b>：口に含めたときの全体的な印象',
+          '③ <b>後味（Aftertaste）</b>：飲み込んだ後に残る風味',
+          '④ <b>酸味（Acidity）</b>：種類と強さ',
+          '⑤ <b>甘さ（Sweetness）</b>：ショ糖等による甘さ',
+          '⑥ <b>コク（Body）</b>：重さ、濃さ',
+          '⑦ <b>バランス（Balance）</b>：各要素の調和',
+          '⑧ <b>総合評価（Overall）</b>：最終的な好ましさ',
+          'SCAJ基準では80点以上がスペシャルティの認定基準です。'
+        ],
+        quiz:{
+          q:'カップテストの評価項目で「コク」は何を測定する？',
+          opts:['香りの強さ','豆の産地','液体の重さと濃さ','カフェイン含量'],
+          ans:2,
+          explain:'「コク（Body）」は液体の重さと濃さを評価する項目です。'
+        }
+      }
+    ]
+  },
+  {
+    id:'flow_price',
+    title:'流通と価格',
+    icon:'💰',
+    part:'第1部 1級',
+    lessons:[
+      {
+        teach:[
+          '<b>コーヒーの流通形態（精選後）</b>',
+          '<b>非水洗式（ドライプロセス）</b>の流通段階：',
+          '① ドライチェリー（未精選）',
+          '② 精選後の未選別生豆',
+          '③ 選別後の生豆（グレード別）',
+          '<b>水洗式（ウェットプロセス）</b>の流通段階：',
+          '① ウェットパーチメント（湿った状態）',
+          '② パーチメント（乾いた状態、パーチメント除去前）',
+          '③ 未選別生豆',
+          '④ 選別後の生豆（グレード別）',
+          'グレード別の流通が国際取引の標準です。'
+        ],
+        quiz:{
+          q:'水洗式コーヒーの流通で「パーチメント」の段階は？',
+          opts:['生豆に精選済み','パーチメント殻がついた乾燥状態','パーチメント殻を除去した後','湿った状態'],
+          ans:1,
+          explain:'パーチメントはパーチメント殻がついた乾燥状態で、まだ脱殻前の段階です。'
+        }
+      },
+      {
+        teach:[
+          '<b>コーヒー商品先物取引の市場</b>',
+          '<b>定期市場（期物取引）</b>:',
+          'アラビカ種：<span class="keyword">ニューヨーク取引所（NYSE）</span>',
+          'カネフォラ種（ロブスタ）：<span class="keyword">ロンドン取引所（ICE）</span>',
+          'これらは世界のコーヒー価格の基準となります。',
+          '<b>実物市場（スポット）</b>:',
+          '各産地で実際の取引が行われます。',
+          '定期市場の価格がベースになります。'
+        ],
+        quiz:{
+          q:'アラビカ種の期物取引がおこなわれる市場は？',
+          opts:['ロンドン取引所','東京取引所','ニューヨーク取引所','シンガポール取引所'],
+          ans:2,
+          explain:'アラビカ種はニューヨーク取引所で定期市場（期物）取引がおこなわれます。'
+        }
+      },
+      {
+        teach:[
+          '<b>生豆の国際輸送と梱包</b>',
+          '<b>輸出時の梱包：麻袋（60kg/袋が標準）</b>',
+          '麻袋に印字される情報：',
+          '① <span class="keyword">ICO番号</span>（生産国を示す国番号）',
+          '　　　 例）B = ブラジル、C = コロンビア',
+          '② <span class="keyword">輸出業者登録番号</span>',
+          '③ <span class="keyword">輸出契約ロット番号</span>',
+          '　　　 トレーサビリティの確保',
+          'これらの情報により、豆の出所と品質の確認が可能です。',
+          '環境負荷軽減でバイオマス麻袋への転換が進行中。'
+        ],
+        quiz:{
+          q:'生豆輸出用麻袋に印字される最も重要な情報は？',
+          opts:['重量','味の評価','ICO番号と輸出ロット番号','焙煎度'],
+          ans:2,
+          explain:'ICO番号と輸出ロット番号によりトレーサビリティが確保され、出所と品質追跡が可能になります。'
+        }
+      },
+      {
+        teach:[
+          '<b>生豆の保管条件と温度管理</b>',
+          '<b>保管温度</b>：',
+          '　低い方が経時変化を抑えられる',
+          '　例：10℃ vs 25℃では保存性が大きく異なる',
+          'ただし：低温→高湿になりやすい（結露リスク）',
+          '<b>保管湿度</b>：',
+          '　60%を超えないことが重要',
+          '　高湿→カビ、虫害のリスク増加',
+          '<b>理想的な保管</b>：',
+          '　温度と湿度のバランス',
+          '　例）15℃、55%湿度が理想的とされる'
+        ],
+        quiz:{
+          q:'生豆保存で最も重要な指標は？',
+          opts:['温度のみ','湿度のみ','温度と湿度の両方','光の遮断'],
+          ans:2,
+          explain:'温度と湿度のバランス管理が生豆保存の最重要指標です。'
+        }
+      },
+      {
+        teach:[
+          '<b>リーファーコンテナ（冷凍コンテナ）の重要性</b>',
+          '<b>通常のコンテナの問題</b>:',
+          '　外部環境の影響を受ける',
+          '　夏場：内部温度が60℃を超えることも',
+          '　品質劣化リスクが高い',
+          '<b>リーファーコンテナ</b>:',
+          '　温度管理された輸送手段',
+          '　安定した温度（10～15℃程度）を維持',
+          '　品質保持に優れている',
+          '<b>トレンド</b>：',
+          'リーファーコンテナの利用が増加傾向',
+          'スペシャルティコーヒーはほぼ必須'
+        ],
+        quiz:{
+          q:'通常のコンテナ輸送での温度管理の問題は？',
+          opts:['温度が低すぎる','カビが生えやすい','内部温度が60℃超えることがある','酸素がなくなる'],
+          ans:2,
+          explain:'通常のコンテナは外部環境の影響を受け、夏場は内部温度が60℃を超え、品質が劣化するリスクがあります。'
+        }
+      }
+    ]
+  },
+  {
+    id:'blend_roast_basic',
+    title:'焙煎度・ブレンドの基礎',
+    icon:'🔥',
+    part:'第2部 2級',
+    lessons:[
+      {
+        teach:[
+          '<b>焙煎度の基本</b>',
+          '焙煎度はコーヒーの風味を大きく左右します。',
+          '① シナモンロースト：浅煎り',
+          '② ニューイングランドロースト',
+          '③ アメリカンロースト：中浅煎り',
+          '④ シティロースト：中煎り',
+          '⑤ フルシティロースト：深煎り',
+          '⑥ イタリアンロースト：最深煎り',
+          '焙煎度が深いほど苦味とボディが強くなります。'
+        ],
+        quiz:{
+          q:'シティロースト（中煎り）の特徴は？',
+          opts:['酸味が最大','苦味とボディのバランスが取れている','苦味が最大','酸味が完全になくなる'],
+          ans:1,
+          explain:'シティロースト（中煎り）は、酸味と苦味、ボディのバランスが最も取れた焙煎度です。'
+        }
+      },
+      {
+        teach:[
+          '<b>ブレンドの目的</b>',
+          'コーヒー豆をブレンドする理由：',
+          '① 風味の補完：異なる産地の豆を組み合わせ',
+          '② 価格調整：高級豆と一般豆を混合',
+          '③ 安定性：毎年同じ風味を実現',
+          '④ 特徴を活かす：各豆の個性を引き出す',
+          'ブレンド比率により風味が大きく変わります。'
+        ],
+        quiz:{
+          q:'ブレンドの最も重要な目的は？',
+          opts:['価格を安くする','風味と品質を最適化する','豆の保存期間を延ばす','カフェイン含有量を調整する'],
+          ans:1,
+          explain:'ブレンドは異なる豆の特性を活かし、風味と品質を最適化することが最重要な目的です。'
+        }
+      }
+    ]
+  },
+  {
+    id:'flavor_basic',
+    title:'風味の基礎',
+    icon:'👃',
+    part:'第2部 2級',
+    lessons:[
+      {
+        teach:[
+          '<b>コーヒーの風味の三要素</b>',
+          '① 香り（アロマ）',
+          '　　抽出時の香気成分',
+          '② 味（テイスト）',
+          '　　酸味、苦味、甘み',
+          '③ ボディ（マウスフィール）',
+          '　　口の中の重さと質感',
+          'この三つが調和して良いコーヒーになります。'
+        ],
+        quiz:{
+          q:'コーヒーのボディとは何か？',
+          opts:['豆の大きさ','口の中の重さと質感','焙煎度の深さ','含まれるカフェイン量'],
+          ans:1,
+          explain:'ボディは口の中で感じる重さと質感のことで、含有成分量に関係があります。'
+        }
+      },
+      {
+        teach:[
+          '<b>風味の基本用語</b>',
+          '酸味の種類：',
+          '　柑橘酸：爽やかな酸味',
+          '　リンゴ酸：まろやかな酸味',
+          '苦味の質：',
+          '　チョコレート系：心地よい苦味',
+          '　焦げた系：不快な苦味',
+          '甘み：焙煎による糖化と焦げ',
+          '各要素の評価がコーヒーの品質判定に重要です。'
+        ],
+        quiz:{
+          q:'コーヒーに含まれる「クリーンな酸味」とは？',
+          opts:['不快な酸っぱさ','さっぱりとした好ましい酸味','強い苦味','甘みを消す要素'],
+          ans:1,
+          explain:'クリーンな酸味は、さっぱりとしていて好ましい酸の感覚を指します。'
+        }
+      }
+    ]
+  },
+  {
+    id:'brewing',
+    title:'抽出の科学',
+    icon:'☕',
+    part:'第2部 2級',
+    lessons:[
+      {
+        teach:[
+          '<b>抽出の基本原理</b>',
+          'コーヒーの成分を湯に溶かすプロセス：',
+          '① 水がコーヒー粉に浸透',
+          '② 成分が湯に溶出',
+          '③ 抽出液が流れ出す',
+          '抽出時間と温度が成分の溶出量を決定',
+          '最適な抽出 = 好ましい成分のみが溶出'
+        ],
+        quiz:{
+          q:'コーヒー抽出で最も重要な条件は？',
+          opts:['豆の種類のみ','水温と接触時間','豆の保存期間','容器の色'],
+          ans:1,
+          explain:'水温と接触時間が、どの成分がどの程度溶出するかを決定する最重要条件です。'
+        }
+      },
+      {
+        teach:[
+          '<b>主要な抽出方法</b>',
+          '① ドリップ（メーカー式）',
+          '　　ポット型、メーカー型など',
+          '② エスプレッソ',
+          '　　高圧力での瞬間抽出',
+          '③ フレンチプレス',
+          '　　豆を湯に漬けて抽出',
+          '④ サイフォン',
+          '　　器具の科学を利用した抽出',
+          '各方法で風味が大きく異なります。'
+        ],
+        quiz:{
+          q:'フレンチプレスの抽出方法は？',
+          opts:['高圧による瞬間抽出','豆を湯に漬ける浸漬法','ペーパーフィルターを使う','加熱しながら抽出'],
+          ans:1,
+          explain:'フレンチプレスは豆を湯に漬ける浸漬法で、ボディ感の強いコーヒーが得られます。'
+        }
+      }
+    ]
+  },
+  {
+    id:'preservation',
+    title:'保存とコーヒーの劣化',
+    icon:'🛡️',
+    part:'第2部 2級',
+    lessons:[
+      {
+        teach:[
+          '<b>コーヒーの劣化要因</b>',
+          '主な劣化原因：',
+          '① 酸化：酸素との反応',
+          '② 水分吸収：湿度の影響',
+          '③ 温度上昇：化学反応の加速',
+          '④ 光：紫外線による分解',
+          '⑤ 時間：経時変化',
+          '複数の要因が複合的に作用します。'
+        ],
+        quiz:{
+          q:'焙煎豆の保存で最も避けべき状況は？',
+          opts:['暗い場所に保存','酸素から遮断する','水分と温度を管理する','定期的に容器を開ける'],
+          ans:3,
+          explain:'容器を頻繁に開けると酸素が入り、急速に酸化・劣化が進みます。'
+        }
+      },
+      {
+        teach:[
+          '<b>焙煎豆の保存方法</b>',
+          'ポイント：',
+          '① 密閉容器を使用',
+          '② 常温保存（冷蔵も可）',
+          '③ 光を遮断',
+          '④ 湿度を避ける',
+          '理想的な保存：',
+          '　低温、低酸素、低湿度、遮光',
+          '開封後は2週間以内の使用が推奨'
+        ],
+        quiz:{
+          q:'開封後のコーヒー豆の保存期間の目安は？',
+          opts:['1日以内','1週間以内','2週間以内','1ヶ月以内'],
+          ans:2,
+          explain:'開封後は徐々に酸化が進むため、2週間以内の使用が推奨されます。'
+        }
+      }
+    ]
+  },
+  {
+    id:'flavor_detail',
+    title:'風味の詳細',
+    icon:'👃',
+    part:'第1部 1級',
+    lessons:[
+      {
+        teach:[
+          '<b>風味プロファイル表</b>',
+          '精選方法別の風味特徴の違い：',
+          '<b>非水洗式（ドライプロセス）</b>',
+          '　対象国：ブラジル、エチオピア、インドネシア等',
+          '　特徴：<span class="keyword">ナッツ系、チョコレート系</span>の風味',
+          '　理由：果肉由来の甘い成分がコーヒーに吸収される',
+          '<b>水洗式（ウェットプロセス）</b>',
+          '　対象国：コロンビア、中米、東アフリカ等',
+          '　特徴：<span class="keyword">クリーンな酸味、フルーツ系</span>の風味',
+          '　理由：発酵過程で果肉が除去され、生豆がクリーン',
+          '<b>スマトラ式（セミウォッシュ）</b>',
+          '　対象地：インドネシア（スマトラ）',
+          '　特徴：<span class="keyword">アーシー、ハーバル系</span>の風味',
+          '　理由：湿った状態での精選による独特の風味発達'
+        ],
+        quiz:{
+          q:'エチオピア水洗コーヒーの風味プロファイルは？',
+          opts:['ナッツ・チョコ系','クリーン・フルーツ系','アーシー・ハーバル系','スパイス系'],
+          ans:1,
+          explain:'エチオピアの水洗式コーヒーは、クリーンな酸味とフルーツ系の風味が特徴です。'
+        }
+      },
+      {
+        teach:[
+          '<b>産地別コーヒーと焙煎特性</b>',
+          '<b>浅煎り向き産地</b>',
+          '　例：エチオピア水洗、ケニア',
+          '　理由：酸味や花のような香りを活かすため',
+          '　焙煎度：シナモンロースト～ニューイングランドロースト',
+          '<b>中煎り向き産地</b>',
+          '　例：コロンビア、グアテマラ',
+          '　理由：酸味と甘さ、ボディのバランスが最適',
+          '　焙煎度：シティロースト',
+          '<b>深煎り向き産地</b>',
+          '　例：マンデリン（インドネシア）、ブラジル',
+          '　理由：ボディ感と甘みの深さを引き出すため',
+          '　焙煎度：フルシティロースト～イタリアンロースト',
+          '焙煎度と産地の組み合わせが風味を決めます。'
+        ],
+        quiz:{
+          q:'マンデリンコーヒーに最適な焙煎度は？',
+          opts:['浅煎り','中煎り','深煎り','焙煎度は関係ない'],
+          ans:2,
+          explain:'マンデリンはボディ感と甘みを引き出すため、深煎り（フルシティロースト～イタリアン）が最適です。'
+        }
+      }
+    ]
+  },
+  {
+    id:'blend_method',
+    title:'ブレンドと炭焼き',
+    icon:'🔄',
+    part:'第1部 1級',
+    lessons:[
+      {
+        teach:[
+          '<b>プレミックスとアフターミックス</b>',
+          '<b>プレミックス</b>',
+          '　定義：焙煎前にコーヒー豆をブレンド',
+          '　メリット：',
+          '　　① 均一性が高い（混合時間を確保できる）',
+          '　　② コスト低い',
+          '　デメリット：',
+          '　　各豆の最適焙煎度を活かしにくい',
+          '<b>アフターミックス</b>',
+          '　定義：個別に焙煎後、冷えてからブレンド',
+          '　メリット：',
+          '　　① 各豆の最適焙煎度を活用できる',
+          '　　② 品質重視のブレンドが可能',
+          '　デメリット：',
+          '　　コスト高い、工程が複雑',
+          'スペシャルティコーヒーはアフターミックスが標準'
+        ],
+        quiz:{
+          q:'各豆の最適焙煎度を活かしたブレンドをするには？',
+          opts:['プレミックス','アフターミックス','焙煎度は関係ない','どちらでも同じ'],
+          ans:1,
+          explain:'アフターミックスは個別焙煎後にブレンドするため、各豆の最適焙煎度を活用できます。'
+        }
+      },
+      {
+        teach:[
+          '<b>炭焼きコーヒーの規約</b>',
+          '<b>全日本コーヒー公正取引協議会の規約</b>',
+          '<span class="keyword">「炭焼きコーヒー」と表示するには：</span>',
+          '　熱源に<b>炭</b>を使って焙煎したものに限定',
+          '　電熱焙煎は「炭焼き」と表記不可',
+          '<b>遠赤外線焙煎の扱い</b>',
+          '　熱源が炭ではなく、ガスやニクロム線',
+          '　「遠赤外線焙煎」と表記するのみ',
+          '　「炭焼き」と表記することはできない',
+          '<b>理由</b>：',
+          '　消費者保護と表示の厳密性',
+          '　炭焼きの独特の風味と品質を保障するため'
+        ],
+        quiz:{
+          q:'「炭焼きコーヒー」と表示できる焙煎方法は？',
+          opts:['遠赤外線焙煎','電熱焙煎','ガス焙煎','炭を熱源とした焙煎'],
+          ans:3,
+          explain:'「炭焼きコーヒー」は炭を熱源とした焙煎に限定されます。遠赤外線焙煎は「炭焼き」と表記できません。'
+        }
+      }
+    ]
+  },
+  {
+    id:'extraction_detail',
+    title:'抽出の詳細',
+    icon:'💧',
+    part:'第1部 1級',
+    lessons:[
+      {
+        teach:[
+          '<b>サイフォン抽出</b>',
+          '<b>分類：浸漬法（イマージョン）</b>',
+          '器具：フラスコとロートの2段構造',
+          '<b>抽出原理</b>',
+          '① 沸騰した湯がロートに上昇',
+          '　　（フラスコの加熱により空気が膨張）',
+          '② コーヒー粉と湯が接触',
+          '　　　抽出が始まる',
+          '③ 火を止めると気圧が低下',
+          '④ フラスコに抽出液が降下',
+          '<b>抽出時間：1〜2分</b>',
+          '<b>特徴</b>：',
+          '　透明性が高い、風味のメリハリがある',
+          '　手順が複雑（儀式的価値）'
+        ],
+        quiz:{
+          q:'サイフォン抽出における浸漬時間は？',
+          opts:['30秒程度','1～2分','3～5分','10分以上'],
+          ans:1,
+          explain:'サイフォン抽出の浸漬時間は1～2分が標準です。'
+        }
+      },
+      {
+        teach:[
+          '<b>水出しコーヒー（コールドブリュー）</b>',
+          '<b>抽出方法</b>',
+          '　水で<span class="keyword">8～24時間</span>かけて抽出',
+          '　温度：常温または冷蔵',
+          '<b>風味特性</b>',
+          '　低温抽出のため：',
+          '　① 酸味が穏やか',
+          '　② 苦味が少ない',
+          '　③ 甘みが出やすい',
+          '<b>カフェイン含有量</b>',
+          '　湯抽出とほぼ同じ（約60～100mg/100mL）',
+          '　低温でも十分に溶出',
+          '<b>用途</b>：',
+          '　アイスコーヒーの基液として利用',
+          '　夏季の人気商品'
+        ],
+        quiz:{
+          q:'コールドブリューのカフェイン含有量は？',
+          opts:['湯抽出より少ない','湯抽出とほぼ同じ','湯抽出より多い','ほぼゼロ'],
+          ans:1,
+          explain:'コールドブリューは低温でも十分に抽出され、カフェイン含有量は湯抽出とほぼ同じです。'
+        }
+      },
+      {
+        teach:[
+          '<b>浸漬法と透過法の特徴比較</b>',
+          '<b>浸漬法（イマージョン）</b>',
+          '　方法：コーヒー粉を湯に漬ける',
+          '　代表例：フレンチプレス、サイフォン',
+          '　特徴：',
+          '　　① 安定した味わい',
+          '　　② ボディ感が強い',
+          '　　③ コク・甘みが豊か',
+          '　　④ 粉が完全に沈んだら飲み干す',
+          '<b>透過法（パーコレーション）</b>',
+          '　方法：湯がコーヒー層を通過',
+          '　代表例：ドリップ、エスプレッソ',
+          '　特徴：',
+          '　　① クリアな味わい',
+          '　　② 酸味が活きる',
+          '　　③ 風味の輪郭がはっきり',
+          '　　④ スッキリした後味',
+          'どちらが優れているのではなく、目的に応じた選択'
+        ],
+        quiz:{
+          q:'フレンチプレスはどちらの抽出法？',
+          opts:['透過法','浸漬法','その両方','分類不可'],
+          ans:1,
+          explain:'フレンチプレスは浸漬法で、粉を湯に漬けてコク・甘みが強いボディ感のあるコーヒーになります。'
+        }
+      },
+      {
+        teach:[
+          '<b>アイスコーヒー</b>',
+          '<b>発祥：日本が起源</b>',
+          '　海外では「iced coffee」と言われることもある',
+          '<b>急冷式</b>',
+          '　方法：濃いめに抽出して氷で急冷',
+          '　抽出量：通常より少ない湯量',
+          '　特徴：',
+          '　　① 風味のメリハリが出る',
+          '　　② 香りが立つ',
+          '　　③ スッキリした飲み口',
+          '<b>水出し式</b>',
+          '　方法：水で長時間（8～24時間）抽出',
+          '　特徴：',
+          '　　① 甘みが豊か',
+          '　　② 酸味が穏やか',
+          '　　③ 苦味が少ない',
+          '<b>選択基準</b>：',
+          '　季節、好みの風味で選ぶ'
+        ],
+        quiz:{
+          q:'急冷式アイスコーヒーの特徴は？',
+          opts:['甘みが強い','風味のメリハリが出る','苦味がない','熱いコーヒーと同じ'],
+          ans:1,
+          explain:'急冷式は濃いめに抽出して急冷するため、風味のメリハリが出てスッキリした飲み口になります。'
+        }
+      }
+    ]
+  },
+  {
+    id:'preservation_detail',
+    title:'保存の詳細',
+    icon:'🛡️',
+    part:'第1部 1級',
+    lessons:[
+      {
+        teach:[
+          '<b>劣化の5大要因と数値</b>',
+          '<b>①水分（最も重要）</b>',
+          '　焙煎豆の水分が1.5%増加すると、',
+          '　<span class="keyword">劣化速度が約1.6倍に加速</span>',
+          '<b>②酸素</b>',
+          '　酸素が0%→1%に増加すると、',
+          '　<span class="keyword">劣化速度が約10倍に加速</span>',
+          '　（最も劇的な変化）',
+          '<b>③温度（温度係数）</b>',
+          '　温度が10℃上昇すると、',
+          '　<span class="keyword">反応速度が約2倍</span>に（Q10 = 2）',
+          '　例：20℃と30℃では劣化速度が2倍',
+          '<b>④光</b>',
+          '　蛍光灯下で1ヶ月保管→暗所の約2倍弱のPOV',
+          '　（過酸化物価が指標）',
+          '<b>⑤時間</b>',
+          '　これら4つの要因が時間とともに複合的に作用',
+          '保存条件の最適化が品質維持の鍵'
+        ],
+        quiz:{
+          q:'焙煎豆の水分が1.5%増加した場合の劣化速度は？',
+          opts:['1.2倍','1.6倍','2倍','5倍'],
+          ans:1,
+          explain:'焙煎豆の水分が1.5%増加すると、劣化速度が約1.6倍に加速します。'
+        }
+      },
+      {
+        teach:[
+          '<b>冷蔵・冷凍保存の注意点</b>',
+          '<b>結露が発生する理由</b>',
+          '　冷蔵庫から出した直後、',
+          '　外部の温暖な空気と冷えた豆の温度差で結露発生',
+          '<b>結露がもたらす悪影響</b>',
+          '　① 豆が水分を吸収',
+          '　　 劣化速度が急上昇',
+          '　② カビが生える可能性',
+          '　③ 風味が大きく損なわれる',
+          '<b>対策</b>',
+          '① <span class="keyword">必要な量だけ取り出す</span>',
+          '② すぐに密封して冷蔵庫に戻す',
+          '③ 全体を出さない',
+          '<b>冷凍保存の優位性</b>',
+          '　最も長期保存に適している',
+          '　結露対策を講じれば数ヶ月保持可能'
+        ],
+        quiz:{
+          q:'冷蔵保存で結露を最小化する方法は？',
+          opts:['常温に戻してから保存','必要量だけ取り出し、すぐに密封','毎日開け閉めする','湿度を高くする'],
+          ans:1,
+          explain:'必要な量だけ取り出してすぐに密封して戻すことで、結露による劣化を最小化できます。'
+        }
+      },
+      {
+        teach:[
+          '<b>抽出液の変化</b>',
+          '<b>抽出後のコーヒーの経時変化</b>',
+          '① 時間とともに<span class="keyword">酸味が増加</span>',
+          '　　→ 有機酸の酸化',
+          '② 風味が劣化する',
+          '　　→ 香気成分の揮発・酸化',
+          '③ 香りが弱くなる',
+          '④ ボディ感が変わる',
+          '<b>保温プレートでの加熱の危険性</b>',
+          '　長時間の加熱は劣化が特に激しい',
+          '　→ 褐色化、焦げた風味が出現',
+          '<b>推奨される飲用時間</b>',
+          '　<span class="keyword">抽出後30分以内に飲む</span>',
+          '　30分を過ぎると風味が劣化開始',
+          '<b>業務店での対応</b>',
+          '　常に新鮮に抽出する',
+          '　保温時間を最小化する'
+        ],
+        quiz:{
+          q:'抽出後のコーヒーが劇的に劣化する要因は？',
+          opts:['酸性化','保温プレートでの長時間加熱','香気成分の揮発','全て該当'],
+          ans:3,
+          explain:'抽出後は時間と加熱の両方により、酸性化、香気成分の揮発、風味の劣化が起こります。'
+        }
+      }
+    ]
+  },
+  {
+    id:'peripheral',
+    title:'周辺知識',
+    icon:'📚',
+    part:'第1部 1級',
+    lessons:[
+      {
+        teach:[
+          '<b>フードファディズム</b>',
+          '<b>定義</b>：',
+          '食品に対して<span class="keyword">過大な健康効果を期待</span>したり、',
+          '逆に一方的に危険視する考え方',
+          '<b>例</b>：',
+          '　「コーヒーは体に良い」→「コーヒーは体に悪い」',
+          '　と根拠なく前後する',
+          '<b>コーヒーと健康の現状</b>',
+          '　肯定的側面：',
+          '　　ポリフェノール、抗酸化物質含有',
+          '　否定的側面：',
+          '　　カフェインの過剰摂取リスク',
+          '<b>重要な態度</b>',
+          '　<span class="keyword">科学的根拠に基づいた冷静な判断</span>',
+          '　メディアや広告の過大表現に惑わされない',
+          '　バランスの取れた情報評価が必須'
+        ],
+        quiz:{
+          q:'フードファディズムの特徴は？',
+          opts:['食品の栄養を学ぶこと','過大な効果期待と危険視の往復','科学的根拠に基づく判断','健康食品の推奨'],
+          ans:1,
+          explain:'フードファディズムは過大な健康効果期待や一方的な危険視を繰り返す現象です。'
+        }
+      },
+      {
+        teach:[
+          '<b>インスタントコーヒーの製法</b>',
+          '<b>①スプレードライ（噴霧乾燥）</b>',
+          '　方法：',
+          '　　コーヒー液を高温の熱風に噴霧',
+          '　　瞬間的に乾燥→粉末状',
+          '　特徴：',
+          '　　　① 溶けやすさ（粉末状）',
+          '　　　② 製造が簡単・低コスト',
+          '　　　③ 風味は弱め（熱損失が大）',
+          '<b>②フリーズドライ（凍結乾燥）</b>',
+          '　方法：',
+          '　　コーヒー液を凍結→真空で水分を昇華乾燥',
+          '　特徴：',
+          '　　　① 風味保持に優れる（低温処理）',
+          '　　　② 粒状になる',
+          '　　　③ 溶解時間が少し長い',
+          '　　　④ スプレードライより高価',
+          '<b>品質評価</b>',
+          '　フリーズドライ > スプレードライ'
+        ],
+        quiz:{
+          q:'風味保持に優れるインスタントコーヒーの製法は？',
+          opts:['スプレードライ','フリーズドライ','どちらも同じ','製法では風味は変わらない'],
+          ans:1,
+          explain:'フリーズドライは低温で乾燥するため、風味保持に優れます。スプレードライは高温のため風味が弱い。'
+        }
+      },
+      {
+        teach:[
+          '<b>リキッドコーヒーの分類</b>',
+          '<b>法的定義（日本）</b>',
+          'コーヒー分（コーヒー粉由来の固形分）の含有量で分類：',
+          '<b>①「コーヒー」</b>',
+          '　コーヒー分：<span class="keyword">5%以上</span>',
+          '　最も濃い',
+          '<b>②「コーヒー飲料」</b>',
+          '　コーヒー分：<span class="keyword">2.5%以上5%未満</span>',
+          '　中程度の濃さ',
+          '<b>③「コーヒー入り清涼飲料」</b>',
+          '　コーヒー分：<span class="keyword">1%以上2.5%未満</span>',
+          '　薄め（清涼飲料が主成分）',
+          '<b>用途</b>：',
+          '　表示基準であり、消費者の選択の指標'
+        ],
+        quiz:{
+          q:'「コーヒー飲料」と表示できるコーヒー分の範囲は？',
+          opts:['1%以上2.5%未満','2.5%以上5%未満','5%以上','制限なし'],
+          ans:1,
+          explain:'「コーヒー飲料」はコーヒー分2.5%以上5%未満で表示されます。'
+        }
+      },
+      {
+        teach:[
+          '<b>缶コーヒーとPETボトルコーヒーの製造法</b>',
+          '<b>缶コーヒー</b>',
+          '　殺菌方法：<span class="keyword">レトルト殺菌</span>',
+          '　条件：121℃で約4分間',
+          '　特徴：',
+          '　　① 長期保存が可能',
+          '　　② 風味は加熱により低下',
+          '<b>PETボトルコーヒー</b>',
+          '　殺菌方法：<span class="keyword">UHT殺菌</span>（超高温瞬間殺菌）',
+          '　条件：130～140℃で数秒間',
+          '　特徴：',
+          '　　① 高温短時間のため風味が良い',
+          '　　② 風味低下が少ない',
+          '　　③ 清涼感が活きる',
+          '<b>総合評価</b>',
+          '　風味品質：PETボトル > 缶',
+          '　理由：加熱時間の短さ'
+        ],
+        quiz:{
+          q:'PETボトルコーヒーの殺菌方法は？',
+          opts:['レトルト殺菌','UHT殺菌','常温保存','冷蔵保存'],
+          ans:1,
+          explain:'PETボトルコーヒーはUHT殺菌（130～140℃、数秒）で高温短時間処理により風味が保たれます。'
+        }
+      }
+    ]
+  },
+  {
+    id:'grinding_detail',
+    title:'粉砕の詳細',
+    icon:'⚙️',
+    part:'第1部 1級',
+    lessons:[
+      {
+        teach:[
+          '<b>粒度分布の重要性</b>',
+          '<b>問題：不均一な粒度</b>',
+          '　粒度がばらつくと：',
+          '　① <span class="keyword">微粉が過抽出</span>',
+          '　　 →苦味・渋みが強くなる',
+          '　② <span class="keyword">粗い粒が未抽出</span>',
+          '　　 →薄い、コクがない',
+          '　③ 全体のバランスが崩れる',
+          '<b>解決：均一な粒度</b>',
+          '　① 安定した抽出が可能',
+          '　② 一定の品質を保つ',
+          '　③ 風味が均一',
+          '<b>粒度分布の表現</b>',
+          '　学術的：<span class="keyword">Rosin-Rammler-Bennetの式</span>',
+          '　　　　　で粒度分布を数学的に表現',
+          '　実務的：メッシュサイズで表現',
+          '均一性の追求がコーヒー品質の基本'
+        ],
+        quiz:{
+          q:'粒度分布が不均一な場合の最大の問題は？',
+          opts:['粉砕機が壊れる','微粉の過抽出と粗粒の未抽出による風味バランスの崩れ','豆の量が減る','香りが強くなる'],
+          ans:1,
+          explain:'不均一な粒度は微粉の過抽出と粗粒の未抽出を招き、風味バランスが崩れます。'
+        }
+      },
+      {
+        teach:[
+          '<b>ミルの種類と特徴</b>',
+          '<b>①ローラーミル</b>',
+          '　用途：商業用（大規模製粉）',
+          '　特徴：',
+          '　　安定した粒度、大量処理可能',
+          '　　高い均一性',
+          '<b>②カットミル（回転刃式）</b>',
+          '　用途：業務用・家庭用',
+          '　特徴：',
+          '　　回転刃で切断',
+          '　　粒度はやや均一',
+          '<b>③臼歯式（コニカル/フラット）</b>',
+          '　用途：家庭用～業務用',
+          '　コニカル：錐形の挽き臼',
+          '　フラット：平らな挽き臼',
+          '　特徴：',
+          '　　低速（熱が少ない）',
+          '　　粒度が均一',
+          '　量の調整：スクリューの回転数で制御',
+          '<b>重要な注意</b>',
+          '　同じダイヤル設定でも、',
+          '　<span class="keyword">粒度分布は異なることがある</span>',
+          '　　→機種・豆の水分で変わる'
+        ],
+        quiz:{
+          q:'同じダイヤル設定でも粒度分布が異なる理由は？',
+          opts:['エラーである','機種と豆の水分の違い','温度の影響のみ','粒度は常に一定である'],
+          ans:1,
+          explain:'機種の差異と豆の水分含有量により、同じダイヤル設定でも粒度分布が異なることがあります。'
+        }
+      },
+      {
+        teach:[
+          '<b>ふるいの規格</b>',
+          '<b>国際標準：ISO勧告</b>',
+          '　各国で使用されるふるいの目開きは、',
+          '　<span class="keyword">ISO基準に基づきほぼ同等</span>',
+          '<b>メッシュの定義</b>',
+          '　メッシュ＝1インチあたりの網目の数',
+          '　例）20メッシュ = 1インチ（2.54cm）に20本の線',
+          '　　　　 = 約1.27mmの目開き',
+          '　　　80メッシュ = 約0.18mmの目開き',
+          '<b>粒度の表現</b>',
+          '　例）#60-80メッシュ = 60メッシュと80メッシュの間に通す粉',
+          '　　　→0.25～0.18mmの粒度範囲',
+          '<b>実務活用</b>',
+          '　ふるい分けにより粒度の均一性を確認',
+          '　スペシャルティコーヒーの品質管理に使用'
+        ],
+        quiz:{
+          q:'80メッシュの目開きサイズは約？',
+          opts:['約1.3mm','約0.5mm','約0.18mm','約0.05mm'],
+          ans:2,
+          explain:'80メッシュは1インチ（2.54cm）に80本の線があり、目開きは約0.18mmです。'
+        }
+      }
+    ]
+  },
+  {
+    id:'packaging_detail',
+    title:'包装の詳細',
+    icon:'🎁',
+    part:'第1部 1級',
+    lessons:[
+      {
+        teach:[
+          '<b>包装方法4種の詳細</b>',
+          '<b>①ガス置換包装（3種類）</b>',
+          '　ａ）チャンバー式（充填室式）',
+          '　　　　包装室全体を窒素で置換後、豆を入れる',
+          '　ｂ）ガスフラッシュ式',
+          '　　　　袋に窒素ガスを吹き込む',
+          '　ｃ）ノズル式',
+          '　　　　ノズルから窒素ガスを注入',
+          '　全て：酸素を外部から遮断',
+          '<b>②真空包装</b>',
+          '　方法：袋内の空気を完全に抜き出す',
+          '　特徴：豆が密着する',
+          '<b>③バルブ付き包装（ワンウェイバルブ）</b>',
+          '　機能：焙煎直後のCO2ガスを逃がしつつ外気を遮断',
+          '　利点：最も実用的（最も一般的）',
+          '<b>④脱酸素剤封入</b>',
+          '　方法：鉄の酸化 or アスコルビン酸で酸素を吸収',
+          '　効果：酸素を吸収して劣化防止'
+        ],
+        quiz:{
+          q:'焙煎直後の豆の大量CO2放出に対応する包装は？',
+          opts:['真空包装','バルブ付き包装','脱酸素剤封入','ガス置換（チャンバー式）'],
+          ans:1,
+          explain:'バルブ付き包装（ワンウェイバルブ）はCO2を逃がしながら外気を遮断するため最適です。'
+        }
+      },
+      {
+        teach:[
+          '<b>包材の構造（積層フィルム）</b>',
+          '<b>一般的な3層構造</b>',
+          '<b>外層：PET（ポリエチレンテレフタレート）</b>',
+          '　役割：',
+          '　　① 印刷適性が良い（デザイン印刷）',
+          '　　② 硬度・耐久性',
+          '　　③ 光の遮断（遮光性）',
+          '<b>中層：VMPET（バリア性層）</b>',
+          '　VMPET = バキュームメタライズド PET',
+          '　　　　　 = アルミニウム蒸着',
+          '　役割：',
+          '　　① 最もガスバリア性が高い',
+          '　　② 酸素を遮断',
+          '　　③ 光遮断性も強化',
+          '<b>内層：PE（ポリエチレン）</b>',
+          '　役割：',
+          '　　① ヒートシール性（熱接着）',
+          '　　② 豆との接触面は柔軟性',
+          '<b>各層の役割が統合的に機能</b>'
+        ],
+        quiz:{
+          q:'包装フィルムの中層に使用される材料の役割は？',
+          opts:['印刷適性','ヒートシール性','ガスバリア性（酸素遮断）','熱伝導'],
+          ans:2,
+          explain:'中層のVMPET（アルミニウム蒸着）が最もガスバリア性が高く、酸素遮断の中心的役割を果たします。'
+        }
+      },
+      {
+        teach:[
+          '<b>脱酸素剤の取扱い注意点</b>',
+          '<b>①開封後はすぐに使用</b>',
+          '　脱酸素剤は空気に触れると反応が開始',
+          '　→効果が損なわれる',
+          '<b>②使用期限を厳守</b>',
+          '　使用期限を超過すると反応が進み、',
+          '　包装内で十分に機能しない',
+          '<b>③電子レンジ不可</b>',
+          '　含有される<span class="keyword">金属成分（鉄粉等）</span>により',
+          '　電子レンジで火花・発火の危険',
+          '<b>④包装の完全性が必須</b>',
+          '　包装に穴が開いていると外気が侵入',
+          '　→脱酸素剤の効果なし',
+          '<b>結論</b>',
+          '　正しい取扱いが脱酸素剤の効果を最大化'
+        ],
+        quiz:{
+          q:'脱酸素剤を電子レンジで加熱できない理由は？',
+          opts:['プラスチックが溶ける','コーヒーの香りが飛ぶ','金属成分による火花・発火のリスク','特に理由はない'],
+          ans:2,
+          explain:'脱酸素剤に含まれる金属成分（鉄粉など）が電子レンジで火花を出し、発火の危険があります。'
+        }
+      }
+    ]
+  },
+  {
+    id:'history',
+    title:'コーヒーの歴史',
+    icon:'📖',
+    part:'第1部 1級',
+    lessons:[
+      {
+        teach:[
+          '<b>コーヒーの発見伝説</b>',
+          '<b>①アラビア発祥説</b>',
+          '　登場人物：イスラム教の僧<span class="keyword">オマール</span>',
+          '　舞台：イエメンのオーザブ山',
+          '　伝説：赤い実を発見して飲み、精神覚醒',
+          '　　　　　その後、修行が捗るようになった',
+          '<b>②エチオピア発祥説</b>',
+          '　登場人物：ヤギ飼い<span class="keyword">カルディ</span>',
+          '　舞台：エチオピアのアビシニア地域',
+          '　伝説：ヤギが赤い実を食べて元気に踊った',
+          '　　　　　人間も飲んでみたところ、精神覚醒',
+          '<b>時代背景</b>',
+          '　両説とも13世紀頃の話（年代は不確実）',
+          '　歴史的確証の前のロマンティックな物語'
+        ],
+        quiz:{
+          q:'カルディ伝説でコーヒーを発見したのは？',
+          opts:['コーヒーを栽培した農民','赤い実を食べたヤギを見た放牧者','イスラム教の僧','ペルシャの商人'],
+          ans:1,
+          explain:'カルディ伝説では、ヤギ飼い・カルディがヤギの様子から赤い実を発見し、飲んでその効果を知りました。'
+        }
+      },
+      {
+        teach:[
+          '<b>初期の文献記録</b>',
+          '<b>ラーゼス（アル・ラーズィー）</b>',
+          '　生存年：850～922年',
+          '　業績：医学書で初めてコーヒーを<span class="keyword">薬として記述</span>',
+          '　記載名：「ブン」または「バンカム」',
+          '　用途：医学的な効果として認識',
+          '<b>アビセンナ（イブン・シーナ）</b>',
+          '　生存年：980～1037年',
+          '　業績：「医学法典」にコーヒーについて記述',
+          '　　　　ラーゼスから約100年後',
+          '<b>その後の展開</b>',
+          '　12～13世紀：ラテン語への翻訳',
+          '　→イスラム世界からヨーロッパへの知識伝播開始',
+          '医学的効果の認識がコーヒー利用を広げた'
+        ],
+        quiz:{
+          q:'初めてコーヒーを医学書に記述したのは？',
+          opts:['カルディ','ラーゼス','アビセンナ','マルコ・ポーロ'],
+          ans:1,
+          explain:'ラーゼス（850～922年）が初めて医学書でコーヒーを薬として記述しました。'
+        }
+      },
+      {
+        teach:[
+          '<b>ヨーロッパへの伝播年表</b>',
+          '<b>14世紀</b>',
+          '　イエメンでコーヒーの飲用が開始',
+          '　イスラム世界での利用拡大',
+          '<b>1450年頃</b>',
+          '　ペルシャでコーヒー豆の焙煎が開始',
+          '　→飲み物としての原型完成',
+          '<b>1554年</b>',
+          '　イスタンブールに世界初のコーヒーハウス',
+          '　名称：「カフェカーネス」',
+          '　意義：コーヒー文化の商業的な出発点',
+          '<b>1645年</b>',
+          '　ベネチアにヨーロッパ初のコーヒーハウス開店',
+          '　イタリアが欧州の玄関口',
+          '<b>1652年</b>',
+          '　ロンドンにコーヒーハウス開店',
+          '　イギリスでの拡大開始',
+          '<b>1700年代</b>',
+          '　J.S.バッハが「コーヒーカンタータ」作曲',
+          '　ヨーロッパでのコーヒー文化浸透を象徴'
+        ],
+        quiz:{
+          q:'世界初のコーヒーハウス「カフェカーネス」はどこ？',
+          opts:['ベネチア','ロンドン','イスタンブール','パリ'],
+          ans:2,
+          explain:'世界初のコーヒーハウス「カフェカーネス」は1554年、イスタンブールに開店しました。'
+        }
+      },
+      {
+        teach:[
+          '<b>日本への伝播</b>',
+          '<b>江戸時代末期</b>',
+          '　記録上のルート：長崎出島からのオランダ商館経由',
+          '<b>1804年</b>',
+          '　太田蜀山人（おおたしょくさんじん）',
+          '　　=日本人初のコーヒー体験記を記述',
+          '<b>明治時代</b>',
+          '　1877年（明治10年）',
+          '　　コーヒー豆の輸入が始まる',
+          '　　輸入量：約18トン',
+          '　1888年（明治21年）',
+          '　　東京・下谷に「可否茶館」開店',
+          '　　日本初のコーヒーハウス',
+          '<b>昭和～現在</b>',
+          '　1960年（昭和35年）',
+          '　　生豆輸入自由化',
+          '　現在（2026年）',
+          '　　<span class="keyword">日本の年間輸入量：30万トン超</span>',
+          '　　　→世界第3位の消費国',
+          '　　ブラジル、ベトナムに次ぐ'
+        ],
+        quiz:{
+          q:'日本の現在のコーヒー消費量は世界で何位？',
+          opts:['1位','2位','3位','5位'],
+          ans:2,
+          explain:'日本の年間輸入量は30万トン超で、ブラジル、ベトナムに次ぎ世界第3位の消費国です。'
+        }
+      }
+    ]
+  },
+  {
+    id:'brazil_cupping',
+    title:'ブラジルのコーヒー鑑定',
+    icon:'🔬',
+    part:'第1部 1級',
+    lessons:[
+      {
+        teach:[
+          '<b>ブラジルのコーヒー鑑定士の仕事</b>',
+          '<b>基本的責務</b>',
+          '消費国のバイヤー要求に応じた品質の生豆を供給',
+          '<b>具体的なプロセス</b>',
+          '① <span class="keyword">買付（キューピング基準）</span>',
+          '　　オーダーに基づき産地・農園から生豆を購入',
+          '② <span class="keyword">ブレンド・欠点除去</span>',
+          '　　 複数の生豆をブレンド',
+          '　　 不良豆（虫害、割れ等）を除去',
+          '③ <span class="keyword">品質評価の3段階</span>',
+          '　　ａ）生豆の外観評価',
+          '　　ｂ）タイプによる評価',
+          '　　ｃ）カップテスト（焙煎・抽出・試飲）',
+          '<b>目標</b>：',
+          '　消費者の満足度を最大化する品質を実現'
+        ],
+        quiz:{
+          q:'ブラジルのコーヒー鑑定士が行う品質評価の段階は？',
+          opts:['外観評価のみ','外観評価とカップテスト','外観評価、タイプ評価、カップテストの3段階','焙煎度の決定のみ'],
+          ans:2,
+          explain:'品質評価は①外観評価②タイプ評価③カップテスト（焙煎・抽出・試飲）の3段階で行われます。'
+        }
+      },
+      {
+        teach:[
+          '<b>生豆外観の評価項目①</b>',
+          '<b>①種（アラビカ/カネフォラ）</b>',
+          '　品種を正確に同定',
+          '<b>②精選方法による外観</b>',
+          '　非水洗式：半光沢の黄色～栗色',
+          '　水洗式：光沢のある青みを帯びた緑、シルバースキン付き',
+          '<b>③形状</b>',
+          '　フラットビーン（通常の楕円形）',
+          '　ピーベリー（球形の突然変異）',
+          '<b>④均一性（3段階評価）</b>',
+          '　上（最高）→中→下（最低）',
+          '<b>⑤色</b>',
+          '　光沢の度合い、色の統一性を評価'
+        ],
+        quiz:{
+          q:'水洗式コーヒーの豆の色は？',
+          opts:['黄色～栗色','光沢のある青みを帯びた緑','赤褐色','黒色'],
+          ans:1,
+          explain:'水洗式コーヒーは、光沢のある青みを帯びた緑色で、シルバースキンが付いています。'
+        }
+      },
+      {
+        teach:[
+          '<b>生豆外観の評価項目②</b>',
+          '<b>⑥経時変化による分類</b>',
+          '　ニュークロップ：焙煎まで1年以内',
+          '　パストクロップ：1～2年経過',
+          '　オールドクロップ：2年以上経過',
+          '　→新しいほど風味が良い傾向',
+          '<b>⑦乾燥状態の評価</b>',
+          '　グッド（最適）',
+          '　レギュラー（通常）',
+          '　プアー（不良）',
+          '　→水分含有量と均一性が基準',
+          '<b>⑧サイズ（粒度）</b>',
+          '　フラットビーン：S12～20',
+          '　　（S=スクリーン、12～20は目開きサイズ）',
+          '　ピーベリー：S10～13',
+          '　サイズが大きい = 良品',
+          '<b>⑨煎りムラ（品質的重要度は低い）</b>',
+          '　ファイン：0%',
+          '　グッド：2%',
+          '　レギュラー：10%',
+          '　プアー：10%超'
+        ],
+        quiz:{
+          q:'フラットビーンのサイズ「S18」の意味は？',
+          opts:['18号焙煎','18時間乾燥','スクリーン目開き18','焙煎度18段階'],
+          ans:2,
+          explain:'S18は「スクリーン18」で、目開きサイズが約1.8mmのふるいを通過する粒度を示します。'
+        }
+      },
+      {
+        teach:[
+          '<b>ブラジル鑑定における主要風味用語</b>',
+          '<b>PRIMARY TASTE（基本風味の等級分け）</b>',
+          'グレードが高い順：',
+          '① Strictly Soft（最高級）',
+          '　　 クリーンでソフトな風味',
+          '② Soft',
+          '③ Softish',
+          '④ Hardish',
+          '⑤ Hard',
+          '⑥ Very Hard',
+          '⑦ Slightly Rioy（やや異臭あり）',
+          '⑧ Rioy（異臭が明確）',
+          '⑨ Rio（低級、強い異臭）',
+          '<b>判断基準：ヨードホルム臭の有無</b>',
+          '　ヨードホルム臭 = 強い異臭',
+          '　非水洗式に時々現れる',
+          '　グレードを大きく左右する最重要判断基準',
+          '<b>評価の実務</b>',
+          '　カップテスト（試飲）で最終判断'
+        ],
+        quiz:{
+          q:'ブラジル鑑定で最高等級のPRIMARY TASTEは？',
+          opts:['Soft','Softish','Strictly Soft','Rio'],
+          ans:2,
+          explain:'「Strictly Soft」がブラジル鑑定における最高等級で、クリーンでソフトな風味を示します。'
+        }
+      }
+    ]
+  },
+  {
+    id:'scaj_cupping',
+    title:'SCAJのコーヒー鑑定',
+    icon:'🏆',
+    part:'第1部 1級',
+    lessons:[
+      {
+        teach:[
+          '<b>カッピング（コーヒー鑑定）の標準手順</b>',
+          '<b>準備段階</b>',
+          '　焙煎豆10g：磨き粉砕して細粉にする',
+          '　湯：約100mL、93～96℃',
+          '<b>①準備審査（予備評価）</b>',
+          '　方法：器から立ち上る湯気の香りを嗅ぐ',
+          '　評価：香りの質と強度',
+          '<b>②撹拌と泡の除去</b>',
+          '　タイミング：注湯後約4分',
+          '　方法：スプーンで撹拌',
+          '　　　　表面の泡を取り除く',
+          '<b>③味の審査（テイスティング）</b>',
+          '　方法：テストスプーンで一口啜る',
+          '　　　　スプーンを口に入れ、液体を吸入吸収',
+          '　　　　（コーヒーを全口腔に広げる）',
+          '<b>④評価と記録</b>',
+          '　各項目を評価表に記入'
+        ],
+        quiz:{
+          q:'カッピングで湯気の香りを評価する段階は？',
+          opts:['撹拌後','注湯後約4分','注湯直後（準備審査）','最終段階'],
+          ans:2,
+          explain:'「準備審査」として、注湯直後に器から立ち上る湯気の香りを嗅ぎ、香りの質と強度を評価します。'
+        }
+      },
+      {
+        teach:[
+          '<b>SCAJ評価8項目（詳細）</b>',
+          '<b>①クリーンカップ</b>',
+          '　評価内容：汚れ、瑕疵、異臭がないか',
+          '　重要性：基本的な品質基準',
+          '<b>②甘さ（Sweetness）</b>',
+          '　評価内容：甘い感覚の有無と強度',
+          '　スペシャルティ重要項目',
+          '<b>③酸味と特徴評価（Acidity & character）</b>',
+          '　酸味の質：明るい、活発か、不快か',
+          '　特徴：個性的か、評価対象',
+          '<b>④粘り気・質感（Mouthfeel）</b>',
+          '　評価：粘り気、密度、濃さ、重さ、滑らかさ、収斂性',
+          '<b>⑤風味特性（Flavor）</b>',
+          '　最重要項目：スペシャルティと一般を区別',
+          '　評価：具体的な香り（チョコ、ナッツ、フルーツ等）',
+          '<b>⑥後味の印象度（Aftertaste）</b>',
+          '　評価：嚥下後の風味の余韻と長さ',
+          '<b>⑦ハーモニー・均衡性（Harmony）</b>',
+          '　評価：各要素がバランスしているか',
+          '<b>⑧総合点（Overall）</b>',
+          '　最終評価、印象度'
+        ],
+        quiz:{
+          q:'SCAJ評価で最もスペシャルティと一般品を区別する項目は？',
+          opts:['甘さ','酸味','風味特性','後味'],
+          ans:2,
+          explain:'風味特性（Flavor）がスペシャルティと一般品を区別する最重要項目です。'
+        }
+      },
+      {
+        teach:[
+          '<b>SCAJ評価スケールと点数計算</b>',
+          '<b>評価スケール</b>',
+          '　0～8点の9段階評価',
+          '　中心点（標準）：4点',
+          '　　→「4点」が通常の質',
+          '<b>8項目の合計</b>',
+          '　8項目 × 最高8点 = 64点満点',
+          '<b>100点満点への計算</b>',
+          '　<span class="keyword">8項目合計 + 定数36 = 100点満点</span>',
+          '　例：',
+          '　　8項目の合計が50点 → 50 + 36 = 86点',
+          '　　8項目の合計が64点 → 64 + 36 = 100点',
+          '<b>スペシャルティコーヒーの基準</b>',
+          '　一般的に80点以上がスペシャルティ',
+          '　高品質の証として評価される'
+        ],
+        quiz:{
+          q:'SCAJ評価で8項目の合計が60点の場合、最終スコアは？',
+          opts:['60点','70点','96点','100点'],
+          ans:2,
+          explain:'8項目の合計が60点の場合、60 + 36 = 96点が最終スコアです。'
+        }
+      }
+    ]
+  }
+];
+
+// --- DAILY SCHEDULE: 4/12 ~ 7/4 (84 days) ---
+// Each entry: [month, day, label, chapterIds[], type]
+// type: 'new'=新規学習, 'review'=復習, 'rest'=休み, 'mock'=模擬テスト
+const SCHEDULE = [
+  // === Week 1 (4/12-4/18): 2級基礎 前半 ===
+  [4,12,'生産国の基礎',['basics_origin'],'new'],
+  [4,13,'格付け（グレード）',['grading'],'new'],
+  [4,14,'特定銘柄・認証・スペシャルティ',['specialty'],'new'],
+  [4,15,'W1復習：生産国〜認証',['basics_origin','grading','specialty'],'review'],
+  [4,16,'焙煎度・ブレンドの基礎',['blend_roast_basic'],'new'],
+  [4,17,'風味の基礎',['flavor_basic'],'new'],
+  [4,18,'休み（知識の定着日）',[],'rest'],
+  // === Week 2 (4/19-4/25): 2級基礎 後半 ===
+  [4,19,'抽出の科学',['brewing'],'new'],
+  [4,20,'保存とコーヒーの劣化',['preservation'],'new'],
+  [4,21,'W2復習：焙煎〜保存',['blend_roast_basic','flavor_basic','brewing','preservation'],'review'],
+  [4,22,'2級基礎 総復習①',['basics_origin','grading','specialty'],'review'],
+  [4,23,'2級基礎 総復習②',['blend_roast_basic','flavor_basic','brewing','preservation'],'review'],
+  [4,24,'休み',[],'rest'],
+  [4,25,'休み',[],'rest'],
+  // === Week 3 (4/26-5/2): 1級 生豆 + 風味詳細 ===
+  [4,26,'生豆①：伝播と品種改良',['green_bean'],'new'],
+  [4,27,'生豆②：栽培と病害虫',['cultivation'],'new'],
+  [4,28,'生豆③：精選と選別',['processing'],'new'],
+  [4,29,'風味の詳細',['flavor_detail'],'new'],
+  [4,30,'生豆④：主要成分',['components'],'new'],
+  [5,1,'休み（GW）',[],'rest'],
+  [5,2,'復習：生豆＋風味',['green_bean','cultivation','processing','components','flavor_detail'],'review'],
+  // === Week 4 (5/3-5/9): 1級 焙煎 + ブレンド・抽出 ===
+  [5,3,'焙煎の科学',['roasting'],'new'],
+  [5,4,'焙煎による成分の変化',['roast_chemistry'],'new'],
+  [5,5,'休み（GW）',[],'rest'],
+  [5,6,'ブレンドと炭焼き',['blend_method'],'new'],
+  [5,7,'抽出の詳細',['extraction_detail'],'new'],
+  [5,8,'保存の詳細',['preservation_detail'],'new'],
+  [5,9,'カップテスト',['cuptest'],'new'],
+  // === Week 5 (5/10-5/16): 復習サイクル1 + 周辺知識・粉砕・包装詳細 ===
+  [5,10,'周辺知識',['peripheral'],'new'],
+  [5,11,'粉砕の詳細',['grinding_detail'],'new'],
+  [5,12,'包装の詳細',['packaging_detail'],'new'],
+  [5,13,'1級全体 復習①：生豆〜風味',['green_bean','cultivation','processing','components','flavor_detail'],'review'],
+  [5,14,'流通と価格',['flow_price'],'new'],
+  [5,15,'休み',[],'rest'],
+  [5,16,'模擬テスト①（全範囲）',[],'mock'],
+  // === Week 6 (5/17-5/23): 歴史・鑑定基礎 ===
+  [5,17,'コーヒーの歴史',['history'],'new'],
+  [5,18,'ブラジルのコーヒー鑑定',['brazil_cupping'],'new'],
+  [5,19,'SCAJのコーヒー鑑定',['scaj_cupping'],'new'],
+  [5,20,'焙煎・化学変化 深掘り',['roasting','roast_chemistry'],'review'],
+  [5,21,'ブレンド・抽出・保存 復習',['blend_method','extraction_detail','preservation_detail'],'review'],
+  [5,22,'休み',[],'rest'],
+  [5,23,'粉砕・包装・カップテスト 深掘り',['grinding','grinding_detail','packaging','packaging_detail','cuptest'],'review'],
+  // === Week 7 (5/24-5/30): 復習サイクル2 ===
+  [5,24,'生豆全体 総複合復習',['green_bean','cultivation','processing','components','flavor_detail'],'review'],
+  [5,25,'焙煎・風味・ブレンド 復習',['roasting','roast_chemistry','blend_method','flavor_detail'],'review'],
+  [5,26,'抽出・保存・歴史 復習',['extraction_detail','preservation_detail','history','brewing','preservation'],'review'],
+  [5,27,'鑑定・周辺知識 復習',['brazil_cupping','scaj_cupping','peripheral'],'review'],
+  [5,28,'全体 統合復習',['grinding','packaging','cuptest','flow_price'],'review'],
+  [5,29,'模擬テスト②（全範囲）',[],'mock'],
+  [5,30,'休み',[],'rest'],
+  // === Week 8 (5/31-6/6): 復習サイクル3 ===
+  [5,31,'弱点復習',[],'review'],
+  [6,1,'2級範囲 最終確認',['basics_origin','grading','specialty','blend_roast_basic','flavor_basic','brewing','preservation'],'review'],
+  [6,2,'1級 生豆・風味 最終確認',['green_bean','cultivation','processing','components','flavor_detail'],'review'],
+  [6,3,'1級 焙煎・ブレンド 最終確認',['roasting','roast_chemistry','blend_method'],'review'],
+  [6,4,'1級 抽出・保存・粉砕・包装 最終確認',['extraction_detail','preservation_detail','grinding','grinding_detail','packaging','packaging_detail'],'review'],
+  [6,5,'休み',[],'rest'],
+  [6,6,'模擬テスト③',[],'mock'],
+  // === Week 9 (6/7-6/13): ===
+  [6,7,'弱点復習',[],'review'],
+  [6,8,'生産国・品種・風味 ランダム演習',['basics_origin','green_bean','flavor_detail'],'review'],
+  [6,9,'格付け・認証・歴史 ランダム演習',['grading','specialty','history'],'review'],
+  [6,10,'精選・成分・ブレンド ランダム演習',['processing','components','blend_method'],'review'],
+  [6,11,'焙煎全般・保存 ランダム演習',['roasting','roast_chemistry','preservation_detail'],'review'],
+  [6,12,'抽出・粉砕・鑑定 ランダム演習',['extraction_detail','grinding','grinding_detail','brazil_cupping'],'review'],
+  [6,13,'休み',[],'rest'],
+  // === Week 10 (6/14-6/20): ===
+  [6,14,'包装・カップテスト・周辺知識 ランダム演習',['packaging','packaging_detail','cuptest','peripheral'],'review'],
+  [6,15,'風味・鑑定・流通 ランダム演習',['flavor_basic','scaj_cupping','flow_price'],'review'],
+  [6,16,'模擬テスト④',[],'mock'],
+  [6,17,'弱点復習',[],'review'],
+  [6,18,'全範囲シャッフル①',[],'review'],
+  [6,19,'全範囲シャッフル②',[],'review'],
+  [6,20,'休み',[],'rest'],
+  // === Week 11 (6/21-6/27): 最終追い込み ===
+  [6,21,'模擬テスト⑤',[],'mock'],
+  [6,22,'弱点集中特訓',[],'review'],
+  [6,23,'2級範囲 完璧仕上げ',['basics_origin','grading','specialty','blend_roast_basic','flavor_basic','brewing','preservation'],'review'],
+  [6,24,'1級 生豆・風味 完璧仕上げ',['green_bean','cultivation','processing','components','flavor_detail'],'review'],
+  [6,25,'1級 焙煎〜カップ・詳細 完璧仕上げ',['roasting','roast_chemistry','blend_method','extraction_detail','grinding','grinding_detail','packaging','packaging_detail','cuptest'],'review'],
+  [6,26,'模擬テスト⑥（最終）',[],'mock'],
+  [6,27,'休み',[],'rest'],
+  // === Week 12 (6/28-7/4): 直前週 ===
+  [6,28,'間違えた問題の総復習',[],'review'],
+  [6,29,'苦手分野ピンポイント復習',[],'review'],
+  [6,30,'軽い全範囲おさらい',[],'review'],
+  [7,1,'軽い全範囲おさらい',[],'review'],
+  [7,2,'最終確認（軽めに）',[],'review'],
+  [7,3,'休み（前日はリラックス）',[],'rest'],
+  [7,4,'🎯 試験本番！がんばれ！',[],'rest'],
+];
+
+
+function getToday(){
+  const d=new Date();
+  return {m:d.getMonth()+1,d:d.getDate(),y:d.getFullYear()};
+}
+function dateToNum(m,d){ return m*100+d; }
+function getTodaySchedule(){
+  const t=getToday();
+  return SCHEDULE.find(s=>s[0]===t.m && s[1]===t.d) || null;
+}
+function getWeekNum(m,d){
+  const start=dateToNum(4,12);
+  const cur=dateToNum(m,d);
+  // approximate week number
+  const startDate=new Date(2026,3,12);
+  const curDate=new Date(2026,m-1,d);
+  const diff=Math.floor((curDate-startDate)/(7*24*60*60*1000));
+  return Math.max(0,Math.min(11,diff))+1;
+}
+function isTodayDone(sched){
+  if(!sched||sched[4]==='rest'||sched[4]==='mock') return false;
+  const chIds=sched[3];
+  if(chIds.length===0) return false;
+  return chIds.every(id=>{
+    const p=state.progress[id];
+    return p && p.completed>=p.total;
+  });
+}
+
+// --- APP STATE ---
+let state = {
+  screen:'welcome', // welcome | chat
+  currentChapter:null,
+  currentLesson:0,
+  phase:'teach', // teach | quiz | result
+  teachIndex:0,
+  answered:false,
+  messages:[],
+  progress:{}, // {chapterId: {completed:N, total:N}}
+  totalCorrect:0,
+  totalAnswered:0,
+  streak:0,
+  bestStreak:0
+};
+
+// Load from memory (no localStorage)
+function initProgress(){
+  CHAPTERS.forEach(ch=>{
+    if(!state.progress[ch.id]) state.progress[ch.id]={completed:0,total:ch.lessons.length};
+  });
+}
+initProgress();
+
+// --- RENDER ---
+const app=document.getElementById('app');
+const menuOverlay=document.getElementById('menuOverlay');
+const menuCard=document.getElementById('menuCard');
+
+function render(){
+  if(state.screen==='welcome') renderWelcome();
+  else renderChat();
+}
+
+function renderWelcome(){
+  const totalLessons=CHAPTERS.reduce((s,c)=>s+c.lessons.length,0);
+  const completedLessons=Object.values(state.progress).reduce((s,p)=>s+p.completed,0);
+  const today=getToday();
+  const todaySched=getTodaySchedule();
+  const examDate=new Date(2026,6,4);
+  const nowDate=new Date(2026,today.m-1,today.d);
+  const daysLeft=Math.max(0,Math.ceil((examDate-nowDate)/(24*60*60*1000)));
+
+  // Build today's task card
+  let todayHtml='';
+  if(todaySched){
+    const typeEmoji={new:'📖 新規学習',review:'🔄 復習',rest:'😴 休息日',mock:'📝 模擬テスト'};
+    const typeLabel=typeEmoji[todaySched[4]]||'📖';
+    let tasksHtml='';
+    if(todaySched[4]==='rest'){
+      tasksHtml=`<li><span class="task-icon">🛌</span>今日はお休み！しっかり定着させよう</li>`;
+    } else if(todaySched[4]==='mock'){
+      tasksHtml=`<li><span class="task-icon">📝</span>全章のクイズをランダムに解こう</li>`;
+    } else if(todaySched[3].length>0){
+      todaySched[3].forEach(id=>{
+        const ch=CHAPTERS.find(c=>c.id===id);
+        if(!ch) return;
+        const p=state.progress[id];
+        const done=p&&p.completed>=p.total;
+        tasksHtml+=`<li><span class="task-icon">${done?'✅':ch.icon}</span><span class="${done?'task-done':''}">${ch.title}</span></li>`;
+      });
+    } else {
+      tasksHtml=`<li><span class="task-icon">🔄</span>${todaySched[2]}</li>`;
+    }
+    const done=isTodayDone(todaySched);
+    todayHtml=`
+      <div class="today-card">
+        <div class="today-date">📅 ${today.m}月${today.d}日（${['日','月','火','水','木','金','土'][nowDate.getDay()]}）— ${typeLabel}</div>
+        <div class="today-title">${done?'✅ ':''}${todaySched[2]}</div>
+        <ul class="today-tasks">${tasksHtml}</ul>
+        <div class="today-overall">試験まであと <b>${daysLeft}日</b> ｜ 全体進捗 <b>${completedLessons}/${totalLessons}</b>レッスン</div>
+      </div>`;
+  } else {
+    todayHtml=`<div class="today-card">
+      <div class="today-date">📅 ${today.m}月${today.d}日</div>
+      <div class="today-title">自由学習日</div>
+      <div class="today-overall">試験まであと <b>${daysLeft}日</b> ｜ 全体進捗 <b>${completedLessons}/${totalLessons}</b>レッスン</div>
+    </div>`;
+  }
+
+  app.innerHTML=`
+    <div class="welcome">
+      <a href="コーヒー1級_トップ.html" style="display:inline-block;margin-bottom:8px;text-decoration:none;font-size:13px;color:var(--accent);opacity:0.8">◀ トップへ戻る</a>
+      <div class="welcome-icon">☕</div>
+      <h1>コーヒー1級 チューター</h1>
+      ${todayHtml}
+      <div class="welcome-btns">
+        <button class="start-btn" onclick="startTodayNorma()" style="font-size:14px;padding:12px 28px">📅 今日のノルマ開始</button>
+        <button class="start-btn" onclick="showMenu()" style="font-size:14px;padding:12px 28px;background:rgba(200,169,110,0.2);color:var(--accent2)">📚 章を選ぶ</button>
+      </div>
+      <div style="margin-top:4px"><button onclick="showScheduleView()" style="background:none;border:none;color:var(--accent);font-size:12px;cursor:pointer;text-decoration:underline">📆 全体スケジュールを見る</button></div>
+    </div>
+  `;
+}
+
+function startTodayNorma(){
+  const todaySched=getTodaySchedule();
+  if(!todaySched||todaySched[4]==='rest'){
+    showMenu();return;
+  }
+  if(todaySched[4]==='mock'){
+    // For mock tests, pick random incomplete or all chapters
+    showMenu();return;
+  }
+  const chIds=todaySched[3];
+  if(chIds.length===0){showMenu();return;}
+  // Find first incomplete chapter in today's list
+  let targetId=null;
+  for(const id of chIds){
+    const p=state.progress[id];
+    if(!p||p.completed<p.total){targetId=id;break;}
+  }
+  if(!targetId) targetId=chIds[0]; // all done, just open first
+  selectChapter(targetId);
+}
+
+function showScheduleView(){
+  const today=getToday();
+  const todayNum=dateToNum(today.m,today.d);
+  // Group by week
+  let weeks={};
+  SCHEDULE.forEach(s=>{
+    const w=getWeekNum(s[0],s[1]);
+    if(!weeks[w]) weeks[w]=[];
+    weeks[w].push(s);
+  });
+  const currentWeek=getWeekNum(today.m,today.d);
+
+  let tabsHtml='';
+  for(let w=1;w<=12;w++){
+    const isCur=w===currentWeek;
+    tabsHtml+=`<div class="sched-tab${isCur?' active current':''}" onclick="showScheduleWeek(${w})">${w===12?'直前週':'W'+w}</div>`;
+  }
+
+  let daysHtml='';
+  const weekData=weeks[currentWeek]||[];
+  weekData.forEach(s=>{
+    const sNum=dateToNum(s[0],s[1]);
+    const isToday=sNum===todayNum;
+    const isPast=sNum<todayNum;
+    const typeIcons={new:'📖',review:'🔄',rest:'😴',mock:'📝'};
+    const done=isTodayDone(s);
+    let statusHtml='';
+    if(done) statusHtml='<span style="color:var(--correct)">✅</span>';
+    else if(isToday) statusHtml='<span style="color:var(--accent)">👈 今日</span>';
+    else if(isPast) statusHtml='<span style="color:var(--text2)">—</span>';
+
+    daysHtml+=`<div class="sched-day${isToday?' today':''}${isPast&&done?' past-done':''}">
+      <span class="day-date">${s[0]}/${s[1]}</span>
+      <span class="day-task">${typeIcons[s[4]]||''} ${s[2]}</span>
+      <span class="day-status">${statusHtml}</span>
+    </div>`;
+  });
+
+  menuCard.innerHTML=`
+    <h2>📆 学習スケジュール</h2>
+    <div style="text-align:center;font-size:12px;color:var(--text2);margin-bottom:8px">4/12〜7/4 全12週間</div>
+    <div class="sched-tabs" id="schedTabs">${tabsHtml}</div>
+    <div id="schedDays">${daysHtml}</div>
+    <button class="menu-close" onclick="closeMenu()">閉じる</button>
+  `;
+  menuOverlay.classList.add('show');
+}
+
+function showScheduleWeek(w){
+  const today=getToday();
+  const todayNum=dateToNum(today.m,today.d);
+  let weeks={};
+  SCHEDULE.forEach(s=>{
+    const wk=getWeekNum(s[0],s[1]);
+    if(!weeks[wk]) weeks[wk]=[];
+    weeks[wk].push(s);
+  });
+
+  // Update tabs
+  document.querySelectorAll('.sched-tab').forEach((tab,i)=>{
+    tab.classList.toggle('active',i+1===w);
+  });
+
+  const weekData=weeks[w]||[];
+  let daysHtml='';
+  const typeIcons={new:'📖',review:'🔄',rest:'😴',mock:'📝'};
+  weekData.forEach(s=>{
+    const sNum=dateToNum(s[0],s[1]);
+    const isToday=sNum===todayNum;
+    const isPast=sNum<todayNum;
+    const done=isTodayDone(s);
+    let statusHtml='';
+    if(done) statusHtml='<span style="color:var(--correct)">✅</span>';
+    else if(isToday) statusHtml='<span style="color:var(--accent)">👈 今日</span>';
+    else if(isPast) statusHtml='<span style="color:var(--text2)">—</span>';
+
+    daysHtml+=`<div class="sched-day${isToday?' today':''}${isPast&&done?' past-done':''}">
+      <span class="day-date">${s[0]}/${s[1]}</span>
+      <span class="day-task">${typeIcons[s[4]]||''} ${s[2]}</span>
+      <span class="day-status">${statusHtml}</span>
+    </div>`;
+  });
+  document.getElementById('schedDays').innerHTML=daysHtml;
+}
+
+function renderChat(){
+  const ch=CHAPTERS.find(c=>c.id===state.currentChapter);
+  if(!ch) return;
+  const prog=state.progress[ch.id];
+  const pct=Math.round((prog.completed/prog.total)*100);
+
+  let html=`
+    <div class="header">
+      <a href="コーヒー1級_トップ.html" class="home-link" title="トップへ戻る">&#9664;</a>
+      <div class="header-avatar">☕</div>
+      <div class="header-info">
+        <div class="header-name">コーヒー先生</div>
+        <div class="header-status">レッスン中</div>
+      </div>
+      <div class="header-stats">
+        <span class="stat-badge">🔥${state.streak}</span>
+        <span class="stat-badge">⭐${state.totalCorrect}</span>
+        <span class="stat-badge" onclick="goHome()" style="cursor:pointer">🏠</span>
+      </div>
+    </div>
+    <div class="chat-area" id="chatArea">`;
+
+  state.messages.forEach(m=>{
+    html+=`<div class="msg ${m.type}">${m.html}</div>`;
+  });
+
+  html+=`</div>`;
+
+  // Bottom bar
+  html+=`<div class="bottom-bar">`;
+  html+=`<div class="progress-wrap"><div class="progress-outer"><div class="progress-inner" style="width:${pct}%"></div></div><div class="progress-label">${ch.icon} ${ch.title} — ${prog.completed}/${prog.total}レッスン完了</div></div>`;
+
+  html+=`<div class="action-row">`;
+  if(state.phase==='teach'){
+    const lesson=ch.lessons[state.currentLesson];
+    if(state.teachIndex < lesson.teach.length){
+      html+=`<button class="action-btn primary" onclick="nextTeach()">次へ ▶</button>`;
+    } else {
+      html+=`<button class="action-btn primary" onclick="startQuiz()">クイズに挑戦！</button>`;
+    }
+  } else if(state.phase==='result'){
+    if(state.currentLesson < ch.lessons.length-1){
+      html+=`<button class="action-btn primary" onclick="nextLesson()">次のレッスン ▶</button>`;
+    } else {
+      html+=`<button class="action-btn primary" onclick="finishChapter()">章を完了！ 🎉</button>`;
+    }
+  }
+  html+=`<button class="action-btn" onclick="showMenu()">📚 章を選ぶ</button>`;
+  html+=`</div></div>`;
+
+  app.innerHTML=html;
+
+  // Scroll to bottom
+  requestAnimationFrame(()=>{
+    const area=document.getElementById('chatArea');
+    if(area) area.scrollTop=area.scrollHeight;
+  });
+}
+
+// --- MENU ---
+function showMenu(){
+  const todaySched=getTodaySchedule();
+  const todayChIds=todaySched?todaySched[3]:[];
+
+  let parts={};
+  CHAPTERS.forEach(ch=>{
+    if(!parts[ch.part]) parts[ch.part]=[];
+    parts[ch.part].push(ch);
+  });
+
+  let html=`<h2>📚 章を選択</h2>`;
+
+  // Show today's norma at top if applicable
+  if(todaySched && todayChIds.length>0){
+    const today=getToday();
+    html+=`<div style="background:rgba(200,169,110,0.1);border:1px solid rgba(200,169,110,0.3);border-radius:12px;padding:10px 14px;margin-bottom:12px">`;
+    html+=`<div style="color:var(--accent);font-size:12px;font-weight:700;margin-bottom:6px">📅 ${today.m}/${today.d} 今日のノルマ：${todaySched[2]}</div>`;
+    todayChIds.forEach(id=>{
+      const ch=CHAPTERS.find(c=>c.id===id);
+      if(!ch) return;
+      const p=state.progress[id];
+      const done=p&&p.completed>=p.total;
+      html+=`<div class="menu-item" style="margin-bottom:4px;${done?'opacity:0.6':''}" onclick="selectChapter('${id}')">
+        <div><div class="ch-name">${done?'✅ ':'📌 '}${ch.icon} ${ch.title}</div></div>
+        ${done?'<span class="ch-badge done">完了</span>':'<span class="ch-badge progress">学習する</span>'}
+      </div>`;
+    });
+    html+=`</div>`;
+  }
+
+  for(let part in parts){
+    html+=`<div style="color:var(--accent);font-size:12px;font-weight:700;margin:12px 0 6px;padding-left:4px">${part}</div>`;
+    parts[part].forEach(ch=>{
+      const p=state.progress[ch.id];
+      const isToday=todayChIds.includes(ch.id);
+      let badge='';
+      if(p.completed>=p.total) badge=`<span class="ch-badge done">✓ 完了</span>`;
+      else if(p.completed>0) badge=`<span class="ch-badge progress">${p.completed}/${p.total}</span>`;
+      else badge=`<span class="ch-badge new">未学習</span>`;
+      html+=`<div class="menu-item" style="${isToday?'border-color:rgba(200,169,110,0.5);background:rgba(200,169,110,0.05)':''}" onclick="selectChapter('${ch.id}')">
+        <div><div class="ch-name">${ch.icon} ${ch.title}${isToday?' <span style="font-size:10px;color:var(--accent)">📅今日</span>':''}</div><div class="ch-sub">${ch.lessons.length}レッスン</div></div>
+        ${badge}
+      </div>`;
+    });
+  }
+  const totalQ=state.totalAnswered;
+  const totalC=state.totalCorrect;
+  if(totalQ>0){
+    html+=`<div style="text-align:center;margin-top:16px;font-size:12px;color:var(--text2)">
+      累計: ${totalC}/${totalQ}問正解 (${Math.round(totalC/totalQ*100)}%) | 最長連続正解: ${state.bestStreak}問
+    </div>`;
+  }
+  html+=`<button class="menu-close" onclick="closeMenu()">閉じる</button>`;
+  menuCard.innerHTML=html;
+  menuOverlay.classList.add('show');
+}
+
+function closeMenu(){menuOverlay.classList.remove('show')}
+
+function selectChapter(id){
+  closeMenu();
+  const ch=CHAPTERS.find(c=>c.id===id);
+  if(!ch) return;
+  state.screen='chat';
+  state.currentChapter=id;
+  // Start from first incomplete lesson
+  const p=state.progress[id];
+  state.currentLesson=Math.min(p.completed, ch.lessons.length-1);
+  state.phase='teach';
+  state.teachIndex=0;
+  state.answered=false;
+  state.messages=[];
+
+  // System message
+  addMsg('system',`${ch.icon} ${ch.title} — レッスン${state.currentLesson+1}/${ch.lessons.length}`);
+
+  // First teach
+  const lesson=ch.lessons[state.currentLesson];
+  addMsg('bot',`<b>レッスン${state.currentLesson+1}</b>を始めましょう！`);
+  addMsg('bot',lesson.teach[0]);
+  state.teachIndex=1;
+
+  render();
+}
+
+// --- MESSAGES ---
+function addMsg(type,html){
+  state.messages.push({type:`msg-${type}`,html});
+}
+
+// --- TEACH FLOW ---
+function nextTeach(){
+  const ch=CHAPTERS.find(c=>c.id===state.currentChapter);
+  const lesson=ch.lessons[state.currentLesson];
+  if(state.teachIndex < lesson.teach.length){
+    addMsg('bot',lesson.teach[state.teachIndex]);
+    state.teachIndex++;
+  }
+  render();
+}
+
+function startQuiz(){
+  addMsg('user','理解しました！クイズお願いします');
+  const ch=CHAPTERS.find(c=>c.id===state.currentChapter);
+  const lesson=ch.lessons[state.currentLesson];
+  const q=lesson.quiz;
+
+  let optHtml=`<div class="quiz-options">`;
+  const labels=['A','B','C','D'];
+  q.opts.forEach((opt,i)=>{
+    optHtml+=`<button class="quiz-btn" id="qopt${i}" onclick="answerQuiz(${i})"><span class="opt-label">${labels[i]}</span>${opt}</button>`;
+  });
+  optHtml+=`</div>`;
+
+  addMsg('bot',`<b>🧠 クイズ</b><br>${q.q}${optHtml}`);
+  state.phase='quiz';
+  state.answered=false;
+  render();
+}
+
+function answerQuiz(idx){
+  if(state.answered) return;
+  state.answered=true;
+
+  const ch=CHAPTERS.find(c=>c.id===state.currentChapter);
+  const lesson=ch.lessons[state.currentLesson];
+  const q=lesson.quiz;
+  const correct=idx===q.ans;
+
+  state.totalAnswered++;
+  if(correct){
+    state.totalCorrect++;
+    state.streak++;
+    if(state.streak>state.bestStreak) state.bestStreak=state.streak;
+  } else {
+    state.streak=0;
+  }
+
+  // Update buttons
+  const labels=['A','B','C','D'];
+  for(let i=0;i<q.opts.length;i++){
+    const btn=document.getElementById('qopt'+i);
+    if(!btn) continue;
+    btn.disabled=true;
+    if(i===q.ans) btn.classList.add(i===idx?'correct':'reveal');
+    else if(i===idx) btn.classList.add('wrong');
+  }
+
+  // Result message
+  addMsg('user',`${labels[idx]}. ${q.opts[idx]}`);
+
+  if(correct){
+    const praises=['素晴らしい！','正解です！','その通り！','完璧！','お見事！'];
+    addMsg('bot',`<span class="correct-mark">⭕ ${praises[Math.random()*praises.length|0]}</span>${state.streak>=3?` 🔥${state.streak}連続正解！`:''}<div class="explain-box">${q.explain}</div>`);
+  } else {
+    addMsg('bot',`<span class="wrong-mark">❌ 惜しい！正解は <b>${labels[q.ans]}. ${q.opts[q.ans]}</b> です。</span><div class="explain-box">${q.explain}</div>`);
+  }
+
+  // Mark lesson completed
+  const p=state.progress[ch.id];
+  if(state.currentLesson>=p.completed) p.completed=state.currentLesson+1;
+
+  state.phase='result';
+  render();
+}
+
+function nextLesson(){
+  const ch=CHAPTERS.find(c=>c.id===state.currentChapter);
+  state.currentLesson++;
+  state.phase='teach';
+  state.teachIndex=0;
+  state.answered=false;
+
+  addMsg('system',`レッスン${state.currentLesson+1}/${ch.lessons.length}`);
+  const lesson=ch.lessons[state.currentLesson];
+  addMsg('bot',`<b>レッスン${state.currentLesson+1}</b>に進みましょう！`);
+  addMsg('bot',lesson.teach[0]);
+  state.teachIndex=1;
+  render();
+}
+
+function finishChapter(){
+  const ch=CHAPTERS.find(c=>c.id===state.currentChapter);
+  addMsg('system',`🎉 ${ch.title} 完了！`);
+
+  // Check if today's norma is now complete
+  const todaySched=getTodaySchedule();
+  const todayDone=isTodayDone(todaySched);
+  const todayChIds=todaySched?todaySched[3]:[];
+  const nextCh=todayChIds.find(id=>{
+    const p=state.progress[id];
+    return !p||p.completed<p.total;
+  });
+
+  let extraMsg='';
+  if(todayDone && todaySched){
+    extraMsg=`<br><br>🎊 <b>今日のノルマ達成！</b>お疲れ様でした！`;
+  } else if(nextCh){
+    const nch=CHAPTERS.find(c=>c.id===nextCh);
+    extraMsg=`<br><br>今日のノルマの次は：<b>${nch?nch.icon+' '+nch.title:''}</b>`;
+  }
+
+  addMsg('bot',`おめでとうございます！<b>${ch.title}</b>の全レッスンを完了しました！🎉${extraMsg}`);
+  state.phase='result';
+  render();
+
+  if(todayDone){
+    setTimeout(goHome,2000);
+  } else if(nextCh){
+    setTimeout(()=>selectChapter(nextCh),2000);
+  } else {
+    setTimeout(showMenu,1500);
+  }
+}
+
+function goHome(){
+  state.screen='welcome';
+  state.currentChapter=null;
+  state.messages=[];
+  render();
+}
+
+// --- INIT ---
+render();
+</script>
+</body>
+</html>
