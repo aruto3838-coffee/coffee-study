@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>コーヒーインストラクター1級 選択肢クイズ</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+    background: #1a1a2e;
+    color: #eee;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+  }
+  h1 {
+    font-size: 1.4em;
+    margin-bottom: 8px;
+    color: #c8a96e;
+    text-align: center;
+  }
+  .subtitle { font-size: 0.85em; color: #888; margin-bottom: 16px; text-align: center; }
+
+  /* 設定パネル */
+  .settings {
+    width: 100%; max-width: 560px;
+    background: #16213e; padding: 14px 16px; border-radius: 10px;
+    margin-bottom: 16px;
+  }
+  .settings-row {
+    display: flex; gap: 10px; align-items: center;
+    flex-wrap: wrap; margin-bottom: 8px;
+  }
+  .settings-row:last-child { margin-bottom: 0; }
+  .settings-label {
+    font-size: 0.85em; color: #c8a96e; min-width: 80px;
+  }
+  .opts-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+  .opts-btn {
+    padding: 5px 12px; border-radius: 16px; border: 1px solid #444;
+    background: #1a1a2e; color: #aaa; cursor: pointer; font-size: 0.82em;
+  }
+  .opts-btn.active { background: #c8a96e; color: #1a1a2e; border-color: #c8a96e; font-weight: bold; }
+  .opts-btn:hover { border-color: #c8a96e; color: #c8a96e; }
+  .opts-btn.active:hover { color: #1a1a2e; }
+
+  /* カテゴリフィルター */
+  .categories {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    justify-content: center; margin-bottom: 14px;
+    width: 100%; max-width: 560px;
+  }
+  .cat-btn {
+    padding: 5px 12px; border-radius: 16px; border: 1px solid #444;
+    background: #16213e; color: #aaa; cursor: pointer; font-size: 0.78em;
+    transition: all 0.2s;
+  }
+  .cat-btn.active { background: #c8a96e; color: #1a1a2e; border-color: #c8a96e; font-weight: bold; }
+  .cat-btn:hover { border-color: #c8a96e; color: #c8a96e; }
+
+  /* 進捗 */
+  .progress-bar-wrap {
+    width: 100%; max-width: 560px; height: 6px;
+    background: #333; border-radius: 3px; margin-bottom: 8px;
+  }
+  .progress-bar {
+    height: 6px; background: #c8a96e; border-radius: 3px;
+    transition: width 0.3s;
+  }
+  .progress-text { font-size: 0.82em; color: #888; margin-bottom: 16px; text-align: center; }
+
+  /* スコア */
+  .score-bar {
+    display: flex; gap: 14px; justify-content: center;
+    margin-bottom: 16px; font-size: 0.88em;
+  }
+  .score-bar span { color: #888; }
+  .score-bar b { color: #c8a96e; }
+  .score-bar .ng b { color: #e74c3c; }
+
+  /* 質問カード */
+  .question-card {
+    width: 100%; max-width: 560px;
+    background: #16213e;
+    border-radius: 12px;
+    padding: 24px 20px;
+    margin-bottom: 18px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+  .cat-tag {
+    display: inline-block; font-size: 0.72em; color: #c8a96e;
+    background: rgba(200,169,110,0.15); padding: 3px 10px;
+    border-radius: 10px; margin-bottom: 10px;
+  }
+  .question-text {
+    font-size: 1.05em; line-height: 1.7; color: #e8e8e8;
+  }
+
+  /* 選択肢 */
+  .options {
+    display: flex; flex-direction: column; gap: 10px;
+    width: 100%; max-width: 560px;
+    margin-bottom: 18px;
+  }
+  .option-btn {
+    width: 100%;
+    text-align: left;
+    background: #16213e;
+    color: #ddd;
+    border: 1.5px solid #2a3f5f;
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 0.95em;
+    line-height: 1.55;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .option-btn:hover:not(:disabled) {
+    border-color: #c8a96e;
+    background: #1a2950;
+  }
+  .option-btn:disabled { cursor: default; }
+  .option-btn .label {
+    display: inline-block; width: 24px; height: 24px;
+    line-height: 24px; text-align: center;
+    border-radius: 50%; background: #2a3f5f; color: #c8a96e;
+    margin-right: 10px; font-weight: bold; font-size: 0.85em;
+    vertical-align: middle;
+  }
+  .option-btn.correct {
+    border-color: #7fcf90; background: rgba(127,207,144,0.12);
+  }
+  .option-btn.correct .label { background: #7fcf90; color: #1a1a2e; }
+  .option-btn.incorrect {
+    border-color: #e74c3c; background: rgba(231,76,60,0.10);
+  }
+  .option-btn.incorrect .label { background: #e74c3c; color: #fff; }
+
+  /* 解説エリア */
+  .explanation {
+    width: 100%; max-width: 560px;
+    background: rgba(127,207,144,0.08);
+    border-left: 3px solid #7fcf90;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin-bottom: 18px;
+    font-size: 0.92em; line-height: 1.7;
+    color: #d8eed8;
+  }
+  .explanation.wrong {
+    background: rgba(231,76,60,0.08);
+    border-left-color: #e74c3c;
+    color: #efd0cc;
+  }
+  .explanation .label {
+    display: inline-block;
+    font-weight: bold;
+    color: #7fcf90;
+    margin-bottom: 4px;
+  }
+  .explanation.wrong .label { color: #e74c3c; }
+
+  /* ボタン */
+  .controls {
+    display: flex; gap: 12px;
+    justify-content: center; flex-wrap: wrap;
+    margin-bottom: 16px; width: 100%; max-width: 560px;
+  }
+  .btn {
+    padding: 11px 22px;
+    border-radius: 22px; border: none;
+    font-size: 0.95em; font-weight: bold;
+    cursor: pointer; transition: all 0.2s;
+    font-family: inherit;
+  }
+  .btn-primary { background: #c8a96e; color: #1a1a2e; }
+  .btn-primary:hover { background: #d8b97e; }
+  .btn-secondary { background: #2a3f5f; color: #ddd; }
+  .btn-secondary:hover { background: #3a4f6f; }
+  .btn-danger { background: #b03a3a; color: #fff; }
+  .btn-danger:hover { background: #c04a4a; }
+
+  /* 完了画面 */
+  .complete-card {
+    width: 100%; max-width: 560px;
+    background: #16213e; border-radius: 14px;
+    padding: 30px 24px; margin-top: 16px; text-align: center;
+  }
+  .complete-card h2 {
+    color: #c8a96e; font-size: 1.4em; margin-bottom: 12px;
+  }
+  .complete-card .score-big {
+    font-size: 2.4em; color: #7fcf90;
+    margin: 14px 0; font-weight: bold;
+  }
+  .complete-card .score-detail {
+    color: #aaa; font-size: 0.92em; margin-bottom: 18px;
+  }
+  .complete-card .actions {
+    display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+  }
+
+  /* 不正解レビューモード表示 */
+  .review-banner {
+    width: 100%; max-width: 560px;
+    background: rgba(231,76,60,0.15);
+    border-left: 3px solid #e74c3c;
+    color: #f5c8c4;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 0.85em;
+    margin-bottom: 12px;
+    text-align: center;
+  }
+
+  @media (max-width: 600px) {
+    h1 { font-size: 1.2em; }
+    .question-text { font-size: 1em; }
+    .option-btn { padding: 12px 14px; font-size: 0.92em; }
+    .btn { padding: 10px 16px; font-size: 0.9em; }
+  }
+</style>
+</head>
+<body>
+
+<h1>☕ 選択肢クイズ（4〜10択）</h1>
+<div class="subtitle">フラッシュカードと同じ142問・選択肢で慣れる用</div>
+
+<!-- 設定パネル -->
+<div class="settings" id="settings">
+  <div class="settings-row">
+    <div class="settings-label">選択肢数：</div>
+    <div class="opts-btns" id="optsCount">
+      <button class="opts-btn active" data-n="4">4択</button>
+      <button class="opts-btn" data-n="6">6択</button>
+      <button class="opts-btn" data-n="8">8択</button>
+      <button class="opts-btn" data-n="10">10択</button>
+    </div>
+  </div>
+  <div class="settings-row">
+    <div class="settings-label">出題順：</div>
+    <div class="opts-btns" id="orderType">
+      <button class="opts-btn active" data-order="random">ランダム</button>
+      <button class="opts-btn" data-order="sequential">順番</button>
+    </div>
+  </div>
+</div>
+
+<!-- カテゴリフィルター -->
+<div class="categories" id="categories"></div>
+
+<!-- レビューバナー -->
+<div class="review-banner" id="reviewBanner" style="display:none;">
+  📝 間違えた問題のみを復習中
+</div>
+
+<!-- 進捗 -->
+<div class="progress-bar-wrap"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
+<div class="progress-text" id="progressText">— / —</div>
+
+<!-- スコア -->
+<div class="score-bar">
+  <span>正解 <b id="scoreOk">0</b></span>
+  <span class="ng">不正解 <b id="scoreNg">0</b></span>
+</div>
+
+<!-- 質問エリア -->
+<div id="quizArea"></div>
+
+<!-- 完了画面 -->
+<div id="completeArea" style="display:none;"></div>
+
+<script>
+// ============================================================
+// データ：flash.html と同じ142問
+// ============================================================
+const ALL_CARDS = [
+  // ===== 伝播 =====
+  {cat:"伝播", q:"アラビカ種がエチオピアからイエメンへ伝わったのはいつ頃か？", a:"6〜9世紀"},
+  {cat:"伝播", q:"1699年にコーヒーをイエメンからジャワ島へ運んだのは誰か？", a:"東インド会社"},
+  {cat:"伝播", q:"1706年にジャワからアムステルダム植物園に送られたのは何か？", a:"コーヒーの木1本（種子から育てた）"},
+  {cat:"伝播", q:"「noble tree（ノーブルツリー）」として中南米のコーヒー栽培の元になった木は、何年にどこに送られたか？", a:"1713年、フランスのルイ14世へ"},
+  {cat:"伝播", q:"ティピカをマルチニーク島へ運んだのは誰か？またいつ頃か？", a:"フランス人将校クリュー、1720年頃"},
+  {cat:"伝播", q:"ブルボン種はどこからどこへ導入されたのが起源か？", a:"イエメン→ブルボン島（現レユニオン島）。1717年頃"},
+  {cat:"伝播", q:"カネフォラ種の伝播はいつ始まったか？またどこへ送られたか？", a:"1898年。キュー植物園からシンガポール・トリニダードへ"},
+  {cat:"伝播", q:"さび病への耐性から急速に導入が進んだのはどの種か？", a:"カネフォラ種。1860〜80年代のさび病被害後"},
+
+  // ===== 品種改良 =====
+  {cat:"品種改良", q:"アラビカ種の品種改良で行われる「選抜」とはどんな方法か？", a:"突然変異体（約1/100,000の確率）を利用し、特性の優れた個体を選抜。栽培と選抜を繰り返して特性を確立"},
+  {cat:"品種改良", q:"カネフォラ種・リベリカ種とアラビカ種のハイブリッド化が難しい理由は？", a:"染色体の数が異なるから。薬品処理で染色体数を合わせるか、偶然できた雑種をベースにする"},
+  {cat:"品種改良", q:"ティピカの突然変異種であるブルボンの特徴は？", a:"ティピカより丈夫・収量が多い"},
+  {cat:"品種改良", q:"カトゥーラの起源と特徴は？", a:"ブラジル（ブルボンの突然変異）。矮性・収量が高い。中米の主要栽培品種"},
+  {cat:"品種改良", q:"ムンドノーボの起源と特徴は？", a:"スマトラ（ティピカ突然変異種）とブルボンの交配種。丈夫・収量高い。ブラジルの主要栽培品種"},
+  {cat:"品種改良", q:"カトゥアイの起源は？", a:"ムンドノーボとカトゥーラの交配種。矮性・収量高い・病害虫に弱い"},
+  {cat:"品種改良", q:"カティモールの起源と特徴は？", a:"HdT（ハイブリッドティモール）とカトゥーラの交配種。耐さび病性がある"},
+  {cat:"品種改良", q:"ゲイシャ種の特徴は？", a:"エチオピアのゲイシャが起源。フザリウム菌に耐性がある"},
+  {cat:"品種改良", q:"ルイルイレブンの特徴は？", a:"ケニア産。カティモール系×SL28系。さび病・CBDに耐性あり・収量高い"},
+  {cat:"品種改良", q:"コロンビア品種の弱点は？", a:"樹の寿命が短い"},
+  {cat:"品種改良", q:"イカトゥの弱点は？", a:"乾燥と寒さに弱い"},
+  {cat:"品種改良", q:"ブルーマウンテンの病害への特徴（さび病/CBD）は？", a:"CBDにわずかに耐性がある。さび病には弱い"},
+
+  // ===== 栽培 =====
+  {cat:"栽培", q:"アラビカ種の栽培に最適な年間平均気温は？", a:"18〜22℃"},
+  {cat:"栽培", q:"カネフォラ種の栽培に最適な年間平均気温は？", a:"22〜28℃"},
+  {cat:"栽培", q:"アラビカ種の栽培に必要な年間降水量は？", a:"1,400〜2,000mm"},
+  {cat:"栽培", q:"カネフォラ種の栽培に必要な年間降水量は？", a:"2,000〜2,500mm"},
+  {cat:"栽培", q:"標高が100m上昇すると気温はどれくらい変わるか？", a:"0.6℃低下"},
+  {cat:"栽培", q:"アラビカ種の土壌で重要な酸性度は？", a:"弱酸性が望ましい"},
+  {cat:"栽培", q:"コーヒー栽培において最も重要視される土壌の要素は何か？", a:"腐植（ふしょく）含量。窒素・リン・微量元素を含み保水性・排水性にも寄与する"},
+  {cat:"栽培", q:"シェードツリーの役割を4つ以上挙げよ", a:"日照調整・温度差の緩和・浸食防止・低肥料化・防風・樹の寿命延長・果実品質向上"},
+  {cat:"栽培", q:"アラビカ種が乾燥に耐えられる期間はどのくらいか？", a:"約6ヶ月"},
+  {cat:"栽培", q:"カネフォラ種が乾燥に耐えられる期間はどのくらいか？", a:"約4ヶ月"},
+  {cat:"栽培", q:"ベリーボーラー（ブロッカ）とはどんな害虫か？", a:"キクイムシの一種。果実に入り込み種子を食い荒らす。多くは成熟前に落果する"},
+  {cat:"栽培", q:"さび病はどのように感染が広がるか？", a:"葉の裏側のオレンジ色の病斑でつくられた胞子が雨季に感染を広げる"},
+  {cat:"栽培", q:"CBDとは何か？どんな被害をもたらすか？", a:"コーヒーベリー病。主にアフリカで問題。果実表面に病斑→果肉除去困難。高湿・低温で感染しやすい"},
+
+  // ===== 収穫 =====
+  {cat:"収穫", q:"完熟果実を一粒ずつ摘む収穫方法の最大のデメリットは？", a:"作業コストが高い・人手不足に対応しにくい"},
+  {cat:"収穫", q:"地面に直接しごき落とす収穫方法の最大のリスクは？", a:"果実が土に触れて細菌に冒されるダメージが大きい。未成熟〜過熟・異物が混入する"},
+  {cat:"収穫", q:"機械による収穫で完熟果実をある程度選択的に収穫できる理由は？", a:"完熟果実は未成熟果実より枝から外れやすいため、叩く強さを調整することで選択的収穫が可能"},
+  {cat:"収穫", q:"いずれの収穫方法でも、収穫期の最後にすべての果実を収穫する理由は？", a:"害虫（ベリーボーラー）の発生を防ぐため"},
+
+  // ===== 精選 =====
+  {cat:"精選", q:"非水洗式（ナチュラル）の工程を簡単に説明せよ", a:"粗選別後、コーヒーチェリーをそのまま乾燥させ、果肉・ミューシレージ・パーチメントを一度に脱殻"},
+  {cat:"精選", q:"非水洗式を採用している代表的な国を3つ挙げよ", a:"ブラジル・エチオピア・イエメン（他にインドネシア〈カネフォラ種〉・ベトナムなど）"},
+  {cat:"精選", q:"水洗式でパーチメントコーヒーの表面に残る粘液質を何というか？", a:"ミューシレージ（mucilage）"},
+  {cat:"精選", q:"発酵槽処理（フリーウォッシュド）とはどんな方法か？", a:"ミューシレージを酵素と微生物で発酵・分解する。過度の発酵は異臭の原因"},
+  {cat:"精選", q:"パルプドアンドデミューシレージドのメリットを3つ挙げよ", a:"①省スペース ②品質管理しやすい ③水の使用量が少なく環境負荷が小さい"},
+  {cat:"精選", q:"パルプドナチュラル（ハニープロセス）の特徴は？", a:"果肉除去後、ミューシレージのついたパーチメントコーヒーを乾燥させる。未成熟果実の除去が可能で従来の非水洗式より均一性が高い"},
+  {cat:"精選", q:"スマトラ式の特徴と生豆の色は？", a:"ミューシレージ除去後、十分に乾燥させない状態で脱殻→本乾燥。独特の深緑色の生豆になる"},
+  {cat:"精選", q:"コーヒーチェリーの乾燥の品温上限は何℃か？", a:"45℃"},
+  {cat:"精選", q:"パーチメントコーヒーの乾燥の品温上限は何℃か？", a:"40℃（熱風温度は約60℃を上限）"},
+  {cat:"精選", q:"乾燥の目標水分含量は何%か？", a:"10〜13%"},
+  {cat:"精選", q:"脱殻時に水分が多すぎるとどうなるか？少なすぎるとどうなるか？", a:"多すぎ→生豆が破れる。少なすぎ→生豆が割れる"},
+
+  // ===== 選別 =====
+  {cat:"選別", q:"スクリーン選別でピーベリーに使うスクリーンの穴の形は？", a:"細長い穴のスクリーン（フラットビーンは丸穴）"},
+  {cat:"選別", q:"比重選別で品質が高いのは比重の大きい豆か小さい豆か？", a:"比重の大きい豆の方が品質が高い"},
+  {cat:"選別", q:"電子選別で除去できないことがある欠点豆の種類は？", a:"虫食い豆・欠け豆"},
+  {cat:"選別", q:"風力選別はスクリーン選別の前か後か？", a:"前（スクリーン選別前に行うことが多い）"},
+
+  // ===== 保管・輸送 =====
+  {cat:"保管", q:"生豆の保管に理想的な湿度は何%以下か？", a:"60%以下"},
+  {cat:"保管", q:"コンテナ輸送の問題点と、その対策として利用されるコンテナは？", a:"風通しが悪く60℃超・結露のリスク。対策：リーファーコンテナ（冷蔵コンテナ）の利用"},
+  {cat:"保管", q:"ドライチェリーやパーチメントコーヒーの状態で保管する利点は？", a:"経時変化が比較的緩やかなため、品質を維持しやすい"},
+
+  // ===== 主要成分 =====
+  {cat:"成分", q:"カフェインはアラビカ種とカネフォラ種でどちらが多く、何倍か？", a:"カネフォラ種に約2倍多い（アラビカ0.6〜1.5%、カネフォラ2.2〜2.8%）"},
+  {cat:"成分", q:"少糖類（ショ糖など）はアラビカ種とカネフォラ種でどちらが多いか？", a:"アラビカ種に多い"},
+  {cat:"成分", q:"脂質はアラビカ種とカネフォラ種でどちらが多いか？", a:"アラビカ種に多い（アラビカ10〜16%、カネフォラ8〜12%）"},
+  {cat:"成分", q:"灰分（ミネラル）はどちらの種に多いか？また灰分の主要ミネラルは？", a:"カネフォラ種に多い。カリウムが約40%を占める"},
+  {cat:"成分", q:"クロロゲン酸類のうち、未成熟豆に多く含まれる成分は何か？", a:"ジクロロゲン酸（不快な渋味の原因。未成熟豆の熟度判定にも使われる）"},
+  {cat:"成分", q:"生豆の水分含量が14%以上になるとどんな問題が起きるか？", a:"カビの増殖・カビ毒・カビ臭の発生"},
+  {cat:"成分", q:"カフェインレスコーヒーで日本で法律により禁止されている製法は？", a:"有機溶媒（ジクロロメタン）による抽出"},
+  {cat:"成分", q:"多糖類はコーヒーのどんな特性に影響を与えるか？", a:"水に溶けない多糖類は豆の硬さに影響。水に溶ける多糖類は抽出液の口当たりに影響"},
+  {cat:"成分", q:"脂質はペーパーフィルターでろ過されるか？", a:"されない（ろ過されにくい）。カップ1杯に含まれる量はごく微量"},
+  {cat:"成分", q:"コーヒー豆の脂質の主な脂肪酸を4つ挙げよ", a:"リノール酸・パルミチン酸・ステアリン酸・オレイン酸"},
+
+  // ===== 焙煎：伝熱 =====
+  {cat:"焙煎", q:"焙煎における3種類の伝熱を挙げよ", a:"伝導・対流・輻射（放射）"},
+  {cat:"焙煎", q:"輻射（放射）による伝熱速度は何の差に比例するか？", a:"温度の4乗の差に比例（伝導・対流は温度差に比例）"},
+  {cat:"焙煎", q:"輻射による伝熱の特徴的な現象は何か？", a:"反射が起こる"},
+  {cat:"焙煎", q:"熱風量を増加させると焙煎時間が短くなる理由は？", a:"対流による伝熱速度が大きくなるから"},
+
+  // ===== 焙煎：焙煎機 =====
+  {cat:"焙煎機", q:"焙煎機の温度計が測定しているのは何の温度か？", a:"焙煎機内の空気の温度（豆の温度ではない）"},
+  {cat:"焙煎機", q:"ダンパーを開くとどのような効果があるか？", a:"焙煎機内の熱と豆の持っていた熱を奪う。豆から発生するガスを排出する"},
+  {cat:"焙煎機", q:"冷却機が大型機で水冷の場合の注意点は？", a:"過度の散水は品質に悪影響を及ぼす"},
+  {cat:"焙煎機", q:"直火式と半熱風式の構造上の違いは何か？", a:"シリンダーに穴が開いているか否か（直火式＝穴あり、半熱風式＝穴なし）"},
+  {cat:"焙煎機", q:"直火式は炭火の遠赤外線を利用できるか？半熱風式は？", a:"直火式は利用できる。半熱風式は利用できない"},
+  {cat:"焙煎機", q:"熱風式焙煎機の特徴を2つ挙げよ", a:"①対流の影響が非常に大きい ②生産効率が非常に高い（工業用に多い）"},
+  {cat:"焙煎機", q:"半熱風式と直火式の違いとして、温度変化の敏感さはどちらが高いか？", a:"直火式の方が火力変化に対して温度変化が敏感"},
+
+  // ===== 焙煎：プロファイル・L値 =====
+  {cat:"焙煎", q:"温度プロファイルとは何か？", a:"時間の経過に対して温度がどのように変化したかを示したもの"},
+  {cat:"焙煎", q:"昇温速度が大きいと豆の膨張はどうなるか？また抽出にどう影響するか？", a:"急激にガスが発生し、豆の膨張が大きくなる（空洞が大きい）→抽出効率UP・濃くなる"},
+  {cat:"焙煎", q:"L値とは何か？どの数値ほど焙煎が浅いか？", a:"粉の明度を色差計で計測した数値。L値が大きいほど焙煎が浅い（明るい）"},
+  {cat:"焙煎", q:"イタリアンローストのL値は？", a:"15.0未満"},
+  {cat:"焙煎", q:"ミディアムローストのL値の範囲は？", a:"22.5以上25.0未満"},
+  {cat:"焙煎", q:"L値を使うのに注意すべき点は何か？", a:"L値が一致しても色が一致するとは限らない（a・b値が違う可能性）"},
+
+  // ===== 焙煎：成分変化 =====
+  {cat:"焙煎", q:"焙煎によって「大きく減少する」成分を3つ挙げよ", a:"少糖類・アミノ酸・クロロゲン酸類"},
+  {cat:"焙煎", q:"焙煎によって「増える」成分は何か？", a:"褐色色素"},
+  {cat:"焙煎", q:"焙煎後期に酸味が減少する理由は？", a:"酸の熱分解が起こるから"},
+  {cat:"焙煎", q:"キナ酸ラクトンが抽出液中でどうなるか？", a:"結合が外れてキナ酸（酸味を示す）が生成するため、時間とともに酸味が増す"},
+  {cat:"焙煎", q:"メイラード反応とは何か？", a:"ショ糖とアミノ酸の反応でメラノイジン（褐色色素B）と香気成分を生成する反応"},
+  {cat:"焙煎", q:"焙煎で形成される香気成分は何種類程度か？", a:"約650種類"},
+  {cat:"焙煎", q:"フラン類の香りの特徴は？また焙煎の進行に伴いどう変化するか？", a:"カラメルのような甘いロースト香。増加後減少する"},
+  {cat:"焙煎", q:"ピラジン類の香りの特徴と焙煎中の変化は？", a:"ナッツ様〜グリーン様・土様。変化が少ない"},
+  {cat:"焙煎", q:"褐色色素A・B・Cの分子量の大きさを順番に挙げよ", a:"A＞B＞C（Aが最も分子量が大きい。焙煎が進むとAの割合が増える）"},
+
+  // ===== 粉砕 =====
+  {cat:"粉砕", q:"工業用に主に用いられる粉砕機は何か？その特徴は？", a:"ロールグラインダー。粒度の均一性が高く、発熱が少ない"},
+  {cat:"粉砕", q:"粒度を無段階に調整できる粉砕機は？", a:"コニカルカッター（円錐状）。エスプレッソ用電動ミルや手動ミルに多い"},
+  {cat:"粉砕", q:"ブレードグラインダーの最大のデメリットは？", a:"均一性が低い・微粉が多い"},
+  {cat:"粉砕", q:"微粉が多いと抽出にどんな問題が起きるか？", a:"過抽出・目詰まりの原因になる"},
+  {cat:"粉砕", q:"粒度が粗大（粗すぎる）な場合の問題は？", a:"抽出不足になる"},
+  {cat:"粉砕", q:"同じ設定で挽いても粒度分布が一定にならない主な原因を2つ挙げよ", a:"豆の焙煎度・粉砕速度（他に長時間使用による時間変化）"},
+
+  // ===== 包装 =====
+  {cat:"包装", q:"焙煎豆から放出されるガスの最大量はおよそ何%か？また100gの豆では何cm³か？", a:"豆重量の約1%（最大）。100gから約500cm³"},
+  {cat:"包装", q:"レギュラーコーヒーの包装の3大ポイントは？", a:"①水分・酸素の除去 ②水分・酸素が遮断された状態の維持 ③炭酸ガスによる変形・破袋防止"},
+  {cat:"包装", q:"ガスフラッシュ式包装で残存酸素を何%以下にできるか？", a:"1%以下"},
+  {cat:"包装", q:"真空包装のデメリットは？", a:"炭酸ガスの放出に対応できない（膨らみが目立つ）"},
+  {cat:"包装", q:"エージングとは何か？必要な日数は？", a:"焙煎後の豆または粉のガス抜き工程。1〜3日（焙煎度・豆/粉・保管温度で異なる）"},
+  {cat:"包装", q:"バルブ付包装（ワンウェイバルブ）の仕組みを説明せよ", a:"内圧が上昇するとガスが排出され、外部からの水分・酸素の侵入は防ぐ特殊バルブ"},
+  {cat:"包装", q:"脱酸素剤封入包装で、コーヒーに多く使われるタイプは？", a:"酸素・炭酸ガス吸収タイプ（鉄の酸化反応を利用したものが多い）"},
+  {cat:"包装", q:"脱酸素剤使用後に冷蔵・冷凍をすぐにしてはいけない理由は？", a:"脱酸素剤の機能を十分に発揮させるため"},
+  {cat:"包装", q:"包材に求められる4つの性質を答えよ", a:"遮湿性・遮光性・ガスバリア性・保香性"},
+  {cat:"包装", q:"積層フィルムのバリア層に使われる代表的な素材を3つ挙げよ", a:"アルミ箔（Al）・Al蒸着PET（VMPET）・EVOH"},
+
+  // ===== カップテスト =====
+  {cat:"カップテスト", q:"カップテストで1カップ分のコーヒーは何gか？", a:"約7g"},
+  {cat:"カップテスト", q:"カップテストで注ぐ熱湯の量は？", a:"約135mL"},
+  {cat:"カップテスト", q:"カップテストで「1カップずつ別々に粉砕」しなければならない理由は？", a:"まとめて粉砕して各容器に分けると、1カップごとに適切な評価を下すことが不可能になるから"},
+  {cat:"カップテスト", q:"カップテストでコーヒーを飲み込んではいけない理由は（慣習上）？また何回評価するか？", a:"毎回吐き出す（長時間評価のため）。熱い状態と冷めた状態の計2回行うのが望ましい"},
+  {cat:"カップテスト", q:"カップテストの注意事項を5つ挙げよ", a:"①無味無臭の水・容器・道具 ②匂いの強い化粧品を避ける ③過度の飲酒・喫煙を避ける ④過度の刺激物を避ける ⑤健康維持に努める"},
+
+  // ===== 生豆の形状 =====
+  {cat:"生豆形状", q:"断面から見て、ロブスタとアラビカ種の違いは何か？", a:"ロブスタの方が肉厚でエッジが鈍角的"},
+  {cat:"生豆形状", q:"フラット面から見てロブスタの特徴は何か？", a:"センターカットが端まで切れていないことが多い、または一方の先端が尖っていることが多い"},
+
+  // ===== コーヒーの基礎知識（2級範囲・1級でも出題）=====
+  {cat:"基礎知識", q:"コーヒーはどの科・属に属する植物か？", a:"アカネ科（Rubiaceae）コフィア属（Coffea）"},
+  {cat:"基礎知識", q:"アラビカ種とカネフォラ種の世界生産量の割合はおよそ何対何か？", a:"アラビカ種 約60%：カネフォラ種 約40%"},
+  {cat:"基礎知識", q:"コーヒーベルトとはどの地帯を指すか？", a:"赤道をはさむ南北約25度の地帯"},
+  {cat:"基礎知識", q:"ICO（国際コーヒー機関）に登録されているコーヒー輸出国は約何か国か？", a:"約45か国（非加盟生産国を含めると約60か国）"},
+  {cat:"基礎知識", q:"カネフォラ種の一般的な流通名は何か？またその意味は？", a:"ロブスタ（Robusta）。「強い」という意味"},
+  {cat:"基礎知識", q:"焙煎による重量減は最大何%程度か？", a:"最大約20%程度"},
+
+  // ===== 格付け・グレード（2級範囲・1級でも出題）=====
+  {cat:"格付け", q:"コーヒーの格付けの方法として、主な4種類を挙げよ", a:"①栽培地の標高（中米各国・メキシコ）②スクリーンサイズ（コロンビア・ケニア・タンザニア）③欠点数（エチオピア・ペルー）④スクリーン＋欠点数（ブラジル・カリブ海諸国）"},
+  {cat:"格付け", q:"グアテマラ・ホンジュラスなど中米の格付け基準は何か？また最高グレードをSHBというが何の略か？", a:"栽培地の標高による格付け。SHB＝Strictly Hard Bean（高地で育った硬い豆）"},
+  {cat:"格付け", q:"コロンビア・ケニア・タンザニアなどの格付け基準は何か？", a:"スクリーンサイズ（豆の大きさ）による格付け"},
+  {cat:"格付け", q:"ブラジルのコーヒー格付けで「No.2」とはどのような意味か？", a:"欠点数による格付け。300gサンプル中の欠点数が4以下のもの（最高グレード）。欠点数とスクリーンサイズを組み合わせた規格"},
+  {cat:"格付け", q:"エチオピア・ペルーの主な格付け基準は何か？", a:"欠点数（タイプ）による格付け。エチオピアはグレード1〜5まで"},
+  {cat:"格付け", q:"認証コーヒーの代表的な3種類を挙げよ", a:"①JAS有機（農林水産省基準の有機認証）②フェアトレード（FLOの国際基準）③レインフォレストアライアンス"},
+
+  // ===== 抽出（2級範囲・1級でも出題）=====
+  {cat:"抽出", q:"コーヒー抽出に影響を与える要因を6つ挙げよ", a:"①粒度（挽き具合）②成分の溶解度 ③湯温 ④粉の挽き具合（粒度分布） ⑤湯と粉の接触時間 ⑥湯と粉の比率"},
+  {cat:"抽出", q:"コーヒーの抽出過程を3段階に分けると？", a:"①粉内部での移動 ②お湯への移行 ③ろ過"},
+  {cat:"抽出", q:"酸味と苦味、どちらが先に抽出されるか？またその理由は？", a:"酸味が先。酸味成分の移動は速く短時間で出きってしまう。苦味は抽出条件（時間・温度・粒度）に大きく依存"},
+  {cat:"抽出", q:"湯温が高くなると抽出量はどうなるか？", a:"増える（より濃くなる）"},
+  {cat:"抽出", q:"粒径が細かくなるほど抽出量はどうなるか？特に何に注意が必要か？", a:"抽出量が増える。特に微粉の影響が大きく注意が必要"},
+  {cat:"抽出", q:"ドリップ抽出が難しい理由は何か？", a:"湯と粉の接触時間が分かりにくいため。お湯はドリッパーにとどまらずサーバーへ落ちていくため、抽出時間と接触時間が同等でない"},
+  {cat:"抽出", q:"サイフォン抽出の特徴は何か？", a:"フラスコ内の気圧差によって湯が押し上げられ粉と接触して抽出。湯温がほぼ高温に限定されるため味が安定しやすい。視覚的な美しさが特徴"},
+
+  // ===== コーヒーの保存（2級範囲）=====
+  {cat:"保存", q:"焙煎後のコーヒーの変質に特に大きく影響する5つの要因は？", a:"水分・酸素・光・温度・コーヒーの状態（豆か粉か）"},
+  {cat:"保存", q:"酸素濃度と劣化の関係で、特に影響が大きい濃度範囲はどこか？", a:"0〜1%の範囲。低濃度側で影響が非常に大きく、1%以上では大差ない"},
+  {cat:"保存", q:"温度が10℃上がると反応速度はおよそ何倍になるか？", a:"約2倍"},
+  {cat:"保存", q:"豆と粉では、経時変化（劣化速度）はどちらが速いか？", a:"粉の方が豆より経時変化が速い（粉砕すると酸素・水分との接触面積が増えるため）"},
+
+  // ===== インスタント・リキッドコーヒー（2級範囲）=====
+  {cat:"周辺知識", q:"インスタントコーヒーの製法2種類を挙げ、それぞれの特徴を説明せよ", a:"①スプレードライ：霧状にしたエキスを熱風で乾燥。粒が細かい ②フリーズドライ：低圧低温で昇華（固体→気体）して水分除去。粒が粗く、熱負荷が少ないため風味が良好"},
+  {cat:"周辺知識", q:"リキッドコーヒーの呼称区分を答えよ（コーヒー固形分の割合）", a:"5%以上→「コーヒー」、2〜5%未満→「コーヒー飲料」、1〜2%未満→「コーヒー入り飲料」。乳固形分3%以上→「乳飲料」"},
+  {cat:"周辺知識", q:"缶コーヒーに炭酸水素ナトリウム（重曹）を添加する理由は？", a:"pH調整のため。pHが低いと味に違和感が生じたり、乳成分が変質したりするのを防ぐ"},
+
+  // ===== 欠点豆 =====
+  {cat:"選別", q:"欠点豆の種類を5つ以上挙げよ", a:"黒豆・部分的な黒豆・発酵豆・未成熟豆・しわ豆・虫食い豆（重度・軽度）・割れ豆・ドライチェリー・ドライパルプ・貝殻豆・パーチメントコーヒー・カビ豆・フローターなど"},
+  {cat:"選別", q:"フローターとは何か？どのように選別できるか？", a:"内部に空洞のある不完全果実。水に浮かせることで識別できる（比重が小さいため）"},
+];
+
+// ============================================================
+// 状態管理
+// ============================================================
+let state = {
+  optsCount: 4,            // 4 / 6 / 8 / 10
+  orderType: 'random',     // 'random' or 'sequential'
+  selectedCats: new Set(), // 空 = 全部
+  queue: [],               // 出題予定
+  currentIdx: 0,
+  current: null,           // {card, options, correctIdx}
+  answered: false,
+  ok: 0,
+  ng: 0,
+  wrongs: [],              // 間違えたカード（復習モード用）
+  reviewMode: false
+};
+
+// ============================================================
+// データ集計
+// ============================================================
+const ALL_CATS = [...new Set(ALL_CARDS.map(c => c.cat))];
+
+// カテゴリ別カード索引
+const CARDS_BY_CAT = {};
+for (const card of ALL_CARDS) {
+  if (!CARDS_BY_CAT[card.cat]) CARDS_BY_CAT[card.cat] = [];
+  CARDS_BY_CAT[card.cat].push(card);
+}
+
+// ============================================================
+// 選択肢生成
+// ============================================================
+function generateOptions(card, totalCount) {
+  // 同カテゴリから他のカードの答えを抽出
+  const sameCat = CARDS_BY_CAT[card.cat].filter(c => c.a !== card.a);
+  // ランダムにシャッフル
+  const shuffled = [...sameCat].sort(() => Math.random() - 0.5);
+  // 必要な数の不正解選択肢
+  let distractors = shuffled.slice(0, totalCount - 1).map(c => c.a);
+
+  // 不足している場合は他カテゴリから補充
+  if (distractors.length < totalCount - 1) {
+    const others = ALL_CARDS
+      .filter(c => c.cat !== card.cat && c.a !== card.a)
+      .sort(() => Math.random() - 0.5);
+    while (distractors.length < totalCount - 1 && others.length > 0) {
+      const next = others.shift().a;
+      if (!distractors.includes(next)) distractors.push(next);
+    }
+  }
+
+  // 重複除去
+  distractors = [...new Set(distractors)].slice(0, totalCount - 1);
+
+  // 選択肢全体をシャッフル
+  const allOptions = [card.a, ...distractors].sort(() => Math.random() - 0.5);
+  const correctIdx = allOptions.indexOf(card.a);
+  return { options: allOptions, correctIdx };
+}
+
+// ============================================================
+// 出題キュー作成
+// ============================================================
+function buildQueue() {
+  let pool;
+  if (state.reviewMode) {
+    pool = [...state.wrongs];
+    state.wrongs = []; // リセット
+  } else {
+    pool = state.selectedCats.size === 0
+      ? [...ALL_CARDS]
+      : ALL_CARDS.filter(c => state.selectedCats.has(c.cat));
+  }
+  if (state.orderType === 'random') {
+    pool.sort(() => Math.random() - 0.5);
+  }
+  state.queue = pool;
+  state.currentIdx = 0;
+  state.ok = 0;
+  state.ng = 0;
+  state.answered = false;
+}
+
+// ============================================================
+// 描画
+// ============================================================
+function renderCategoryButtons() {
+  const cont = document.getElementById('categories');
+  cont.innerHTML = '';
+  const allBtn = document.createElement('button');
+  allBtn.className = 'cat-btn' + (state.selectedCats.size === 0 ? ' active' : '');
+  allBtn.textContent = '全部';
+  allBtn.onclick = () => {
+    state.selectedCats.clear();
+    renderCategoryButtons();
+    restart();
+  };
+  cont.appendChild(allBtn);
+  for (const cat of ALL_CATS) {
+    const btn = document.createElement('button');
+    btn.className = 'cat-btn' + (state.selectedCats.has(cat) ? ' active' : '');
+    btn.textContent = cat + ' (' + CARDS_BY_CAT[cat].length + ')';
+    btn.onclick = () => {
+      if (state.selectedCats.has(cat)) state.selectedCats.delete(cat);
+      else state.selectedCats.add(cat);
+      renderCategoryButtons();
+      restart();
+    };
+    cont.appendChild(btn);
+  }
+}
+
+function renderQuiz() {
+  const area = document.getElementById('quizArea');
+  const completeArea = document.getElementById('completeArea');
+
+  if (state.currentIdx >= state.queue.length) {
+    // 完了画面
+    area.innerHTML = '';
+    renderComplete();
+    completeArea.style.display = '';
+    return;
+  }
+  completeArea.style.display = 'none';
+
+  const card = state.queue[state.currentIdx];
+  if (!state.current || state.current.card !== card) {
+    const { options, correctIdx } = generateOptions(card, state.optsCount);
+    state.current = { card, options, correctIdx };
+    state.answered = false;
+  }
+
+  const c = state.current;
+  const labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+
+  area.innerHTML = `
+    <div class="question-card">
+      <span class="cat-tag">${escapeHtml(c.card.cat)}</span>
+      <div class="question-text">${escapeHtml(c.card.q)}</div>
+    </div>
+    <div class="options" id="options">
+      ${c.options.map((opt, i) => `
+        <button class="option-btn" data-i="${i}">
+          <span class="label">${labels[i]}</span>${escapeHtml(opt)}
+        </button>
+      `).join('')}
+    </div>
+    <div id="explainArea"></div>
+    <div class="controls" id="controls"></div>
+  `;
+
+  // クリックイベント
+  document.querySelectorAll('.option-btn').forEach(btn => {
+    btn.onclick = () => onOptionClick(parseInt(btn.dataset.i));
+  });
+  updateProgress();
+  updateScore();
+}
+
+function onOptionClick(idx) {
+  if (state.answered) return;
+  state.answered = true;
+
+  const c = state.current;
+  const isCorrect = idx === c.correctIdx;
+  if (isCorrect) state.ok++;
+  else {
+    state.ng++;
+    if (!state.wrongs.includes(c.card)) state.wrongs.push(c.card);
+  }
+  updateScore();
+
+  // 全選択肢を無効化、正解と選んだ選択肢を強調
+  document.querySelectorAll('.option-btn').forEach((btn, i) => {
+    btn.disabled = true;
+    if (i === c.correctIdx) btn.classList.add('correct');
+    else if (i === idx) btn.classList.add('incorrect');
+  });
+
+  // 解説エリア
+  const explain = document.getElementById('explainArea');
+  if (isCorrect) {
+    explain.innerHTML = `
+      <div class="explanation">
+        <div class="label">✓ 正解！</div>
+        <div>${escapeHtml(c.card.a)}</div>
+      </div>
+    `;
+  } else {
+    explain.innerHTML = `
+      <div class="explanation wrong">
+        <div class="label">✗ 不正解</div>
+        <div><b>正解：</b>${escapeHtml(c.card.a)}</div>
+      </div>
+    `;
+  }
+
+  // 次へボタン
+  const ctrl = document.getElementById('controls');
+  const isLast = state.currentIdx >= state.queue.length - 1;
+  ctrl.innerHTML = `
+    <button class="btn btn-primary" id="nextBtn">${isLast ? '結果を見る ▶' : '次の問題 ▶'}</button>
+  `;
+  document.getElementById('nextBtn').onclick = nextQuestion;
+}
+
+function nextQuestion() {
+  state.currentIdx++;
+  state.current = null;
+  renderQuiz();
+}
+
+function renderComplete() {
+  const area = document.getElementById('completeArea');
+  const total = state.ok + state.ng;
+  const pct = total > 0 ? Math.round(state.ok / total * 100) : 0;
+  let comment = '';
+  if (pct >= 90) comment = '🎉 素晴らしい！この調子でフラッシュカードに挑戦！';
+  else if (pct >= 70) comment = '👍 いい感じ！もう少しで完璧';
+  else if (pct >= 50) comment = '📚 半分以上正解。間違えた問題を復習しましょう';
+  else comment = '💪 まだまだこれから！繰り返し挑戦しよう';
+
+  const hasWrongs = state.wrongs.length > 0;
+  area.innerHTML = `
+    <div class="complete-card">
+      <h2>結果</h2>
+      <div class="score-big">${state.ok} / ${total}</div>
+      <div class="score-detail">正解率 ${pct}%</div>
+      <div style="margin: 14px 0; color:#ccc;">${comment}</div>
+      <div class="actions">
+        ${hasWrongs ? `<button class="btn btn-danger" id="reviewWrongs">不正解を復習 (${state.wrongs.length}問)</button>` : ''}
+        <button class="btn btn-primary" id="restartAll">同じ条件でもう1回</button>
+        <button class="btn btn-secondary" id="backTop">トップへ戻る</button>
+      </div>
+    </div>
+  `;
+  if (hasWrongs) {
+    document.getElementById('reviewWrongs').onclick = () => {
+      state.reviewMode = true;
+      buildQueue();
+      document.getElementById('reviewBanner').style.display = '';
+      renderQuiz();
+    };
+  }
+  document.getElementById('restartAll').onclick = () => {
+    state.reviewMode = false;
+    document.getElementById('reviewBanner').style.display = 'none';
+    buildQueue();
+    renderQuiz();
+  };
+  document.getElementById('backTop').onclick = () => {
+    location.href = 'index.html';
+  };
+}
+
+function updateProgress() {
+  const total = state.queue.length;
+  const cur = state.currentIdx + 1;
+  document.getElementById('progressText').textContent = `${cur} / ${total}`;
+  document.getElementById('progressBar').style.width = (cur / total * 100) + '%';
+}
+
+function updateScore() {
+  document.getElementById('scoreOk').textContent = state.ok;
+  document.getElementById('scoreNg').textContent = state.ng;
+}
+
+function restart() {
+  state.reviewMode = false;
+  document.getElementById('reviewBanner').style.display = 'none';
+  buildQueue();
+  renderQuiz();
+}
+
+// ============================================================
+// HTMLエスケープ
+// ============================================================
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// ============================================================
+// 初期化
+// ============================================================
+function init() {
+  // 選択肢数ボタン
+  document.querySelectorAll('#optsCount .opts-btn').forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll('#optsCount .opts-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.optsCount = parseInt(btn.dataset.n);
+      // 現在の問題の選択肢を再生成
+      state.current = null;
+      renderQuiz();
+    };
+  });
+  // 出題順ボタン
+  document.querySelectorAll('#orderType .opts-btn').forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll('#orderType .opts-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.orderType = btn.dataset.order;
+      restart();
+    };
+  });
+
+  renderCategoryButtons();
+  buildQueue();
+  renderQuiz();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
